@@ -61,10 +61,10 @@ def cluster(X, k: int = 0, cluster_model='KMeans', visualize: bool = False):
     return pred_labels
 
 
-def assess_clustering(X, gold_labels, pred_labels):
+def assess_clustering(gold_labels, pred_labels, X=None):
     logger = logging.getLogger()
-    silhouette_avg = silhouette_score(X, gold_labels)
-    davies_bouldin = davies_bouldin_score(X, gold_labels)
+    silhouette_avg = silhouette_score(X, gold_labels) if X else None
+    davies_bouldin = davies_bouldin_score(X, gold_labels) if X else None
     ari = adjusted_rand_score(gold_labels, pred_labels)
     nmi = normalized_mutual_info_score(gold_labels, pred_labels)
     v_measure = v_measure_score(gold_labels, pred_labels)

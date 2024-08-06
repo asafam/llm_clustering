@@ -5,19 +5,12 @@ import random
 import torch
 from torch.utils.data import DataLoader, Dataset
 from enum import Enum
+import math
 
 
 class DatasetName(Enum):
     CLINC = "CLINC"
     BANKING77 = "BANKING77"
-    
-    
-class EmbeddingModelName(Enum):
-    all_MiniLM_L6_v2 = "sentence-transformers/all-MiniLM-L6-v2"
-    intfloat__e5_large_v2 = "intfloat/e5-large-v2"
-    Alibaba_NLP__gte_large_en_v1_5 = "Alibaba-NLP/gte-large-en-v1.5"
-    McGill_NLP__LLM2Vec_Mistral_7B_Instruct_v2_mntp = "McGill-NLP/LLM2Vec-Mistral-7B-Instruct-v2-mntp"
-    McGill_NLP__LLM2Vec_Meta_Llama_3_8B_Instruct_mntp = "McGill-NLP/LLM2Vec-Meta-Llama-3-8B-Instruct-mntp"
 
 
 def load_dataset_by_name(dataset_name):
@@ -42,21 +35,23 @@ def sample_text(
     df: pd.DataFrame, 
     label_column: str, 
     k: int = 0, 
+    n: int = 0, 
     min_cluster_size: int = 0, 
-    total_sample_size: int = 0, 
     seed: int = 42
 ) -> pd.DataFrame:
-    if k * min_cluster_size > total_sample_size:
-        raise ValueError(f"The requested sample with {k} clusters and a min cluster size of {min_cluster_size} is greated than the target sample size of {total_sample_size}")
-    
-    if total_sample_size == 0:
+    # Returned a shuffled copy of the data in case n = 0
+    if n == 0:
         result_df = df.sample(frac=1, random_state=seed)
         return result_df
-        
+
     unique_labels = df[label_column].unique()
     
     random.seed(seed)
-    selected_labels = random.sample(list(unique_labels), k) if k > 0 else list(unique_labels)
+    selected_labels = random.sample(list(unique_labels), k if k > 0 else math.ceil(n / min_cluster_size))
+    k = len(selected_labels)
+
+    if (k * min_cluster_size) > n:
+        raise ValueError(f"The requested sample with {k} clusters and a min cluster size of {min_cluster_size} is greated than the target sample size of {n}")
 
     # Initialize list to hold sampled documents
     sampled_documents = []
@@ -73,11 +68,11 @@ def sample_text(
     # Concatenate all sampled documents into a single DataFrame
     result_df = pd.concat(sampled_documents)
     
-    if len(result_df) >= total_sample_size:
+    if len(result_df) >= n:
         return result_df
 
     # Calculate the number of additional samples needed to reach total_sample_size documents
-    additional_samples_needed = total_sample_size - len(result_df)
+    additional_samples_needed = n - len(result_df)
 
     # Sample the remaining documents from the combined DataFrame
     remaining_df = df[~df.index.isin(result_df.index)]

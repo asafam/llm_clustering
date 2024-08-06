@@ -1,7 +1,15 @@
 import torch
 from transformers import AutoTokenizer, AutoModel, AutoConfig
-from llm2vec import LLM2Vec
 from peft import PeftModel
+from enum import Enum
+
+
+class EmbeddingModelName(Enum):
+    all_MiniLM_L6_v2 = "sentence-transformers/all-MiniLM-L6-v2"
+    intfloat__e5_large_v2 = "intfloat/e5-large-v2"
+    Alibaba_NLP__gte_large_en_v1_5 = "Alibaba-NLP/gte-large-en-v1.5"
+    McGill_NLP__LLM2Vec_Mistral_7B_Instruct_v2_mntp = "McGill-NLP/LLM2Vec-Mistral-7B-Instruct-v2-mntp"
+    McGill_NLP__LLM2Vec_Meta_Llama_3_8B_Instruct_mntp = "McGill-NLP/LLM2Vec-Meta-Llama-3-8B-Instruct-mntp"
 
 
 def load_model(model_name, device):

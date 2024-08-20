@@ -6,24 +6,6 @@ from sklearn.metrics import silhouette_score, adjusted_rand_score, normalized_mu
 import logging
 
 
-def find_best_k(X: list, min_k=2, max_k=10):
-    """
-    Function to find the best k using silhouette score
-    """
-    best_k = min_k
-    best_score = -1
-    for k in range(min_k, max_k + 1):
-        kmeans = KMeans(n_clusters=k, random_state=0).fit(X)
-        score = silhouette_score(X, kmeans.labels_)
-#         print(f'K: {k}, Silhouette Score: {score}')
-        if score > best_score:
-            best_score = score
-            best_k = k
-            
-#     print(f'best_k = {best_k}')
-    return best_k, best_score
-
-
 def visualize_clusters(all_embeddings, kmeans_labels):
     # PCA
     pca = PCA(n_components=2)
@@ -46,23 +28,8 @@ def visualize_clusters(all_embeddings, kmeans_labels):
     plt.show()
 
 
-def cluster(X, k: int = 0, cluster_model='KMeans', visualize: bool = False):
-    if k == 0:
-        k, _ = find_best_k(X)
-    
-    pred_labels = None
-    if cluster_model == 'KMeans':
-        kmeans = KMeans(n_clusters=k, random_state=0)
-        pred_labels = kmeans.fit_predict(X)
-
-    if visualize:
-        visualize_clusters(X, pred_labels)
-        
-    return pred_labels
-
-
 def assess_clustering(gold_labels, pred_labels, X=None):
-    logger = logging.getLogger()
+    logger = logging.getLogger('default')
     silhouette_avg = silhouette_score(X, gold_labels) if X else None
     davies_bouldin = davies_bouldin_score(X, gold_labels) if X else None
     ari = adjusted_rand_score(gold_labels, pred_labels)
@@ -82,3 +49,25 @@ def assess_clustering(gold_labels, pred_labels, X=None):
         nmi = nmi,
         v_measure = v_measure,
     )
+
+
+class KDetermination:
+    def find_best_k(**kwargs) -> int:
+        raise NotImplementedError()
+    
+
+class SilhouetteKDetermination(KDetermination):
+    def find_best_k(X , min_k: int = 0, max_k: int = 10) -> int:
+        """
+        Function to find the best k using silhouette score
+        """
+        best_k = min_k
+        best_score = -1
+        for k in range(min_k, max_k + 1):
+            kmeans = KMeans(n_clusters=k, random_state=0).fit(X)
+            score = silhouette_score(X, kmeans.labels_)
+            if score > best_score:
+                best_score = score
+                best_k = k
+                
+        return best_k

@@ -39,34 +39,38 @@ def sample_text(
     min_cluster_size: int = 0, 
     seed: int = 42
 ) -> pd.DataFrame:
+    result_df = pd.DataFrame()
+
+    # Seed the random generator to repeat results
+    random.seed(seed)
+    
     # Returned a shuffled copy of the data in case n = 0
     if n == 0:
         result_df = df.sample(frac=1, random_state=seed)
         return result_df
 
-    unique_labels = df[label_column].unique()
-    
-    random.seed(seed)
-    selected_labels = random.sample(list(unique_labels), k if k > 0 else math.ceil(n / min_cluster_size))
-    k = len(selected_labels)
+    # sample labels
+    if min_cluster_size > 0:
+        unique_labels = df[label_column].unique()
+        selected_labels = random.sample(list(unique_labels), k) if k > 0 else []
+        k = len(selected_labels)
 
-    if (k * min_cluster_size) > n:
-        raise ValueError(f"The requested sample with {k} clusters and a min cluster size of {min_cluster_size} is greated than the target sample size of {n}")
+        # Sample min_cluster_size documents from each selected intent class
+        if k > 0:
+            # Initialize list to hold sampled documents
+            sampled_documents = []
+            
+            min_cluster_size = min(min_cluster_size, math.floor(n / k))
+            for label in selected_labels:
+                label_df = df[df[label_column] == label]
+                if min_cluster_size > 0:
+                    sampled_label_df = label_df.sample(n=min(min_cluster_size, len(label_df)), random_state=seed)
+                else:
+                    sampled_label_df = df.DataFrame()
+                sampled_documents.append(sampled_label_df)
 
-    # Initialize list to hold sampled documents
-    sampled_documents = []
-
-    # Sample min_cluster_size documents from each selected intent class
-    for label in selected_labels:
-        label_df = df[df[label_column] == label]
-        if min_cluster_size > 0:
-            sampled_label_df = label_df.sample(n=min_cluster_size, random_state=seed)
-        else:
-            sampled_label_df = label_df.sample(frac=1, random_state=seed)
-        sampled_documents.append(sampled_label_df)
-
-    # Concatenate all sampled documents into a single DataFrame
-    result_df = pd.concat(sampled_documents)
+            # Concatenate all sampled documents into a single DataFrame
+            result_df = pd.concat(sampled_documents)
     
     if len(result_df) >= n:
         return result_df

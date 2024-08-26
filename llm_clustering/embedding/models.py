@@ -26,7 +26,7 @@ class UniversalTextEmbeddingModel(TextEmbeddingModel):
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModel.from_pretrained(model_name, trust_remote_code=True).to(self.device)
         
-    def embed(self, texts):
+    def embed(self, texts, batch_size: int = 128):
         """
         Encode a list of texts
         """

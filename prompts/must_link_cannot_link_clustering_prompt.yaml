@@ -24,19 +24,24 @@
 
   Output:
   {
-      "must_link": [
-          (1, 3),
-          (1, 5),
-          (2, 4)
-      ],
-      "cannot_link": [
-          (1, 2),
-          (3, 6),
-          (4, 5)
-      ]
+    "must_link": [
+        (1, 3),
+        (1, 5),
+        (2, 4)
+    ],
+    "cannot_link": [
+        (1, 2),
+        (3, 6),
+        (4, 5)
+    ]
   }
 
-  Sentences for Analysis:
-  {documents}
+  Please cluster the sentence IDs below according to the criteria mentioned above.
 
-  Please identify the must-link and cannot-link pairs according to the criteria mentioned above.
+  Sentences for Clustering:
+  {documents}
+  
+  {k_info}
+
+  Output:
+  

@@ -10,8 +10,9 @@
 
   3. Output:
       - Output your response in a JSON format.
-      - Return a list of tuples, where each tuple represents a sentence ID and its assigned cluster ID.
-      - Each sentence ID should be assigned to one and only one cluster.
+      - Return a dictionary where each key is a sentence ID (represented as an integer)
+      - Each value is the cluster ID that the sentence belongs to.
+      - Each sentence ID must be assigned to exactly one cluster.
 
   Example:
 
@@ -24,16 +25,21 @@
   [ID: 6] Foxes are swift and can jump high.
 
   Output:
-  [
-      (1, 0),
-      (2, 1),
-      (3, 0),
-      (4, 1),
-      (5, 0),
-      (6, 1)
-  ]
+  {
+      1: 0,
+      2: 1,
+      3: 0,
+      4: 1,
+      5: 0,
+      6: 1
+  }
+
+  Please cluster the sentence IDs below according to the criteria mentioned above.
 
   Sentences for Clustering:
   {documents}
+  
+  {k_info}
 
-  Please cluster these sentence IDs according to the criteria mentioned above.
+  Output:
+  

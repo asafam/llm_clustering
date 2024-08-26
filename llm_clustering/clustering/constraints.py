@@ -6,7 +6,7 @@ class PartitionsLevelClusteringConstraints(ClusteringConstraints):
     pass
 
 
-class SubsetHardLabelsClusteringContraints(PartitionsLevelClusteringConstraints):
+class HardLabelsClusteringContraints(PartitionsLevelClusteringConstraints):
     def __init__(self, instances: list) -> None:
         """
         Initialize the SubsetHardLabelsClusteringContraints class.
@@ -30,9 +30,10 @@ class SubsetHardLabelsClusteringContraints(PartitionsLevelClusteringConstraints)
         """
         super().__init__()
         self.instances = instances
+        self.labels = list(set(instances.values()))
 
 
-class SubsetFuzzyLabelsClusteringContraints(PartitionsLevelClusteringConstraints):
+class FuzzyLabelsClusteringContraints(PartitionsLevelClusteringConstraints):
     def __init__(self, instances: list) -> None:
         """
         Initialize the SubsetFuzzyLabelsClusteringContraints class.
@@ -54,16 +55,25 @@ class SubsetFuzzyLabelsClusteringContraints(PartitionsLevelClusteringConstraints
 
         Examples:
         ---------
-        >>> constraints = SubsetFuzzyLabelsClusteringContraints([
-        ...     (1, [(2, 0.8), (3, 0.2)]), 
-        ...     (2, [(1, 0.5), (2, 0.5)])
-        ... ])
+        >>> constraints = SubsetFuzzyLabelsClusteringContraints({
+        ...     1: [(2, 0.8), (3, 0.2)], 
+        ...     2: [(1, 0.5), (2, 0.5)]
+        ... })
         >>> constraints.instances
-        [(1, [(2, 0.8), (3, 0.2)]), (2, [(1, 0.5), (2, 0.5)])]
+        {1: [(2, 0.8), (3, 0.2)], 2: [(1, 0.5), (2, 0.5)]}
 
         """
         super().__init__()
         self.instances = instances
+
+        try:
+            labels = []
+            for value in instances.values():
+                for l in value:
+                    labels.append(l[0])
+            self.labels = set(labels)
+        except:
+            self.labels = None
 
 
 class InstancesLevelClusteringConstraints(ClusteringConstraints):

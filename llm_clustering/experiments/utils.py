@@ -4,8 +4,24 @@ import numpy as np
 import os
 import pickle
 import logging
-from models.embedding import TextEmbeddingModel
+from llms.models import LLM
+from llms.utils import generate_prompt
+from embedding.models import TextEmbeddingModel
 from datasets import TextClusterDataset
+from clustering.constraints_manager import ConstraintsType
+from llms.utils import PromptType
+
+
+def get_logger():
+    logger = logging.getLogger('default')
+    logger.setLevel(logging.DEBUG)
+    logger.propagate = False
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
+    return logger
 
 
 def save_experiments(experiments, file_path):
@@ -36,16 +52,39 @@ def is_experiment_completed(experiments, **kwargs):
     return False
 
 
+def get_prompt_type(constraints_type: ConstraintsType):
+    if constraints_type == ConstraintsType.HardLabelsConstraints:
+        return PromptType.HardLabelsClusteringPrompt
+    elif constraints_type == ConstraintsType.FuzzyLabelsConstraints:
+        return PromptType.FuzzyLabelsClusteringPrompt
+    elif constraints_type == ConstraintsType.MustLinkCannotLinkConstraints:
+        return PromptType.MustLinkCannotLinkClusteringPrompt
+    
+
+def generate_constraints(llm: LLM, constraint_type: ConstraintsType, prompt: str, **kwargs):
+    # generate prompt
+    prompt_type = get_prompt_type(constraint_type=constraint_type)
+    prompt = generate_prompt(prompt_type=prompt_type, **kwargs) # ...
+
+    # execute prompt (possibly n times)
+    results = llm.query_prompt(prompt=prompt)
+    # process results and generate constraints
+
+    if constraints_type == ConstraintsType.Hard:
+        results = 
+
+
 def embed(
         df: pd.DataFrame, 
         text_embedding_model: TextEmbeddingModel, 
+        text_columns: str = 'text',
         label_column: str = 'label', 
         batch_size: int = 128
     ) -> pd.DataFrame:
     """
     Function to encode a batch of texts
     """
-    texts = df['text'].tolist()
+    texts = df[text_columns].tolist()
     labels = df[label_column].tolist()
 
     text_cluster_dataset = TextClusterDataset(texts, labels)
@@ -61,7 +100,7 @@ def embed(
         all_labels.extend(batch_labels)
 
     # Convert the list of embeddings to a single numpy array
-    all_embeddings = np.vstack(all_embeddings)
+    X = np.vstack(all_embeddings)
 
     # Combine embeddings with intents
     embedding_label_df = pd.DataFrame(all_embeddings)

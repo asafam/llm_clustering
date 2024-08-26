@@ -4,16 +4,15 @@ import inspect
 from torch.utils.data import DataLoader
 import pandas as pd
 import numpy as np
-from llm_clustering.datasets import DatasetName, load_dataset_by_name, sample_dataset
+from data import DatasetName, load_dataset_by_name, sample_dataset
 from clustering.constraints_manager import ConstraintsType, KInformationType, generate_constraint
 from clustering.models import ClusteringModel
 from clustering.optimizations import KOptimization
 from clustering.utils import evaluate_clustering
 from embedding.models import TextEmbeddingModel
 from llms.models import LLM
-from llms.utils import generate_prompt
 from constrained_models import BaseConstrainedLLM
-from utils import get_prompt_type, get_logger
+from utils import get_logger
 
 
 logger = get_logger()

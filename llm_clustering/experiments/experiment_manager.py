@@ -1,4 +1,5 @@
 from typing import *
+from datetime import datetime
 import inspect
 from torch.utils.data import DataLoader
 import pandas as pd
@@ -76,6 +77,7 @@ def run_experiments(
     scores = evaluate_clustering(labels_pred=labels_pred, labels_true=labels_true, X=X)
 
     results = dict(
+        timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         labels_true=labels_true,
         labels_pred=labels_pred,
     )

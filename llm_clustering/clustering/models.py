@@ -8,6 +8,9 @@ from clustering.optimizations import KOptimization, SilhouetteKOptimization
 class ClusteringModel:
     def cluster(self, **kwargs):
         raise NotImplementedError()
+    
+    def __str__(self) -> str:
+        return self.__class__.__name__
 
 
 class KMeans(ClusteringModel):

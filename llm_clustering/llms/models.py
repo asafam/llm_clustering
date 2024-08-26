@@ -6,6 +6,9 @@ import ast
 class LLM:
     def create_messages(self, prompt: str, **kwargs):
         raise NotImplementedError()
+    
+    def __str__(self) -> str:
+        return self.__class__.__name__
         
 
 class Claude(LLM):

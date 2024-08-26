@@ -1,5 +1,6 @@
 class ClusteringConstraints:
-    pass
+    def __str__(self) -> str:
+        return self.__class__.__name__
 
 
 class PartitionsLevelClusteringConstraints(ClusteringConstraints):

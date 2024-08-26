@@ -11,7 +11,7 @@ class PromptType(Enum):
 
 def generate_prompt(prompt_type: PromptType, **kwargs):
     # Load the YAML file
-    prompt_file = os.join('prompts', f'{prompt_type.value}.yaml')
+    prompt_file = os.join(os.getenv('LLM_CLUSTERING_BASE_DIR', ''), 'prompts', f'{prompt_type.value}.yaml')
     with open(prompt_file, 'r') as file:
         template_prompt = yaml.safe_load(file)
 

@@ -59,19 +59,6 @@ def get_prompt_type(constraints_type: ConstraintsType):
         return PromptType.FuzzyLabelsClusteringPrompt
     elif constraints_type == ConstraintsType.MustLinkCannotLinkConstraints:
         return PromptType.MustLinkCannotLinkClusteringPrompt
-    
-
-def generate_constraints(llm: LLM, constraint_type: ConstraintsType, prompt: str, **kwargs):
-    # generate prompt
-    prompt_type = get_prompt_type(constraint_type=constraint_type)
-    prompt = generate_prompt(prompt_type=prompt_type, **kwargs) # ...
-
-    # execute prompt (possibly n times)
-    results = llm.query_prompt(prompt=prompt)
-    # process results and generate constraints
-
-    if constraints_type == ConstraintsType.Hard:
-        results = 
 
 
 def embed(

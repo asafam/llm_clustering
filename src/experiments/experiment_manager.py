@@ -12,10 +12,6 @@ from clustering.utils import evaluate_clustering
 from embedding.models import TextEmbeddingModel
 from llms.models import LLM
 from experiments.constrained_models import BaseConstrainedLLM
-from experiments.utils import get_logger
-
-
-logger = get_logger()
 
 
 def run_experiments(

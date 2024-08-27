@@ -27,7 +27,7 @@ def run_experiments(
         clustering_model: ClusteringModel,
         oracle_k_information_type: KInformationType = KInformationType.UnknownK,
         k_optimization: Optional[KOptimization] = None,
-        cluster_k_information_type: Optional[int] = None, 
+        cluster_k_information_type: KInformationType = KInformationType.UnknownK, 
         max_clusters: Optional[int] = 10,
         batch_size: int = 128,
         random_state: int = 42
@@ -58,11 +58,11 @@ def run_experiments(
     # cluster the dataset using the constraint
     if cluster_k_information_type == KInformationType.UnknownK:
         # if number of clusters is unknown then optimize it
-        labels_pred, best_k = clustering_model.cluster(X, constraints=constraint, k_optimization=k_optimization, max_k=max_clusters)
+        labels_pred, best_k = clustering_model.cluster(X, constraints=constraint, k_optimization=k_optimization, max_k=max_clusters, random_state=random_state)
     elif cluster_k_information_type == KInformationType.GroundTruthK:
         # otherwise, provide the true cluster number to the clustering model
         n_clusters = len(set(labels_true))
-        labels_pred = clustering_model.cluster(X, constraint, n_clusters=n_clusters)
+        labels_pred = clustering_model.cluster(X, constraint, n_clusters=n_clusters, random_state=random_state)
     elif cluster_k_information_type == KInformationType.OracleK:
         # or else, provide the predicted cluster number (if we can extract it from the constraint) to the clustering model
         if constraint.labels is None:
@@ -70,7 +70,7 @@ def run_experiments(
         else:
             labels_oracle_pred = constraint.labels
             n_clusters = len(set(labels_oracle_pred))
-            labels_pred = clustering_model.cluster(X, constraint, n_clusters=n_clusters)
+            labels_pred = clustering_model.cluster(X, constraint, n_clusters=n_clusters, random_state=random_state)
 
     # compute score for the clustering
     scores = evaluate_clustering(labels_pred=labels_pred, labels_true=labels_true, X=X)

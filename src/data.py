@@ -54,9 +54,9 @@ def get_text_column(dataset_name: DatasetName):
 
 def get_label_column(dataset_name: DatasetName):
     label_column = None
-    if dataset_name == 'CLINC':
+    if dataset_name == dataset_name.CLINC:
         label_column = 'intent'
-    elif dataset_name == 'BANKING77':
+    elif dataset_name == dataset_name.BANKING77:
         label_column = 'label'
     return label_column
 

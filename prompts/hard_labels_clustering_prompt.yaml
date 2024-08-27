@@ -37,7 +37,7 @@
     Please cluster the sentence IDs below according to the criteria mentioned above.
 
     Sentences for Clustering:
-    {documents}
+    {texts}
 
     {k_info}
 

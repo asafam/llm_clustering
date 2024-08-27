@@ -28,7 +28,7 @@ class UniversalTextEmbeddingModel(TextEmbeddingModel):
         super().__init__()
         logger = logging.getLogger('default')
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        logger.info(f"Loading UniversalTextEmbeddingModel {model_name.value}")
+        logger.debug(f"Loading UniversalTextEmbeddingModel {model_name.value}")
         self.tokenizer = AutoTokenizer.from_pretrained(model_name.value)
         self.model = AutoModel.from_pretrained(model_name.value, trust_remote_code=True).to(self.device)
         

@@ -18,11 +18,11 @@ def generate_prompt(prompt_type: PromptType, **kwargs):
     with open(prompt_file, 'r') as file:
         template_prompt = yaml.safe_load(file)
 
-    # Format the documents as [ID: {index}] {document}
-    documents = kwargs.get('documents')
-    document_index_offset = kwargs.get('document_index_offset', 1)
-    formatted_documents = "\n".join([f"[ID: {index + document_index_offset}] {doc}" for index, doc in enumerate(documents, start=1)])
-    prompt = template_prompt.replace("{documents}", formatted_documents) # Replace the {documents} placeholder
+    # Format the texts as [ID: {index}] {text}
+    texts = kwargs.get('texts')
+    text_index_offset = kwargs.get('text_index_offset', 1)
+    formatted_texts = "\n".join([f"[ID: {index + text_index_offset}] {text}" for index, text in enumerate(texts, start=1)])
+    prompt = template_prompt.replace("{texts}", formatted_texts) # Replace the {texts} placeholder
 
     # Format the k_info 
     k = kwargs.get('k')

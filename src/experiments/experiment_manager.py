@@ -33,7 +33,7 @@ def run_experiments(
 
     # sample subset
     k = 0 if oracle_k_information_type == KInformationType.GroundTruthK else None
-    sample_df = sample_dataset(dataset=dataset, n=sample_n, k=k)
+    sample_df = sample_dataset(dataset=dataset, n=sample_n, k=k, random_state=random_state)
 
     # run the LLM predictions to create the constraints
     sample_texts = sample_df['text'].tolist()

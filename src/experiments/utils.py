@@ -34,11 +34,11 @@ def is_experiment_completed(experiments, **kwargs):
     return False
 
 
-def get_prompt_type(constraints_type: ConstraintsType):
-    if constraints_type == ConstraintsType.HardLabelsConstraints:
+def get_prompt_type(constraint_type: ConstraintsType):
+    if constraint_type == ConstraintsType.HardLabelsConstraints:
         return PromptType.HardLabelsClusteringPrompt
-    elif constraints_type == ConstraintsType.FuzzyLabelsConstraints:
+    elif constraint_type == ConstraintsType.FuzzyLabelsConstraints:
         return PromptType.FuzzyLabelsClusteringPrompt
-    elif constraints_type == ConstraintsType.MustLinkCannotLinkConstraints:
+    elif constraint_type == ConstraintsType.MustLinkCannotLinkConstraints:
         return PromptType.MustLinkCannotLinkClusteringPrompt
 

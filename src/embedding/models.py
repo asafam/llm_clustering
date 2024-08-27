@@ -3,6 +3,7 @@ from transformers import AutoTokenizer, AutoModel, AutoConfig
 from peft import PeftModel
 from llm2vec import LLM2Vec
 from enum import Enum
+import logging 
 
 
 class EmbeddingModelName(Enum):
@@ -25,11 +26,13 @@ class TextEmbeddingModel:
 class UniversalTextEmbeddingModel(TextEmbeddingModel):
     def __init__(self, model_name: EmbeddingModelName) -> None:
         super().__init__()
+        logger = logging.getLogger('default')
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        logger.info(f"Loading UniversalTextEmbeddingModel {model_name.value}")
         self.tokenizer = AutoTokenizer.from_pretrained(model_name.value)
         self.model = AutoModel.from_pretrained(model_name.value, trust_remote_code=True).to(self.device)
         
-    def embed(self, texts, batch_size: int = 128):
+    def embed(self, texts):
         """
         Encode a list of texts
         """

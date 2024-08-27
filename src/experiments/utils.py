@@ -5,17 +5,6 @@ from clustering.constraints_manager import ConstraintsType
 from llms.utils import PromptType
 
 
-def get_logger():
-    logger = logging.getLogger('default')
-    logger.setLevel(logging.DEBUG)
-    logger.propagate = False
-    stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    stream_handler.setFormatter(formatter)
-    logger.addHandler(stream_handler)
-    return logger
-
 
 def save_experiments(experiments, file_path):
     logger = logging.getLogger('default')

@@ -1,47 +1,47 @@
 - prompt: |
-  You are a sophisticated language model capable of understanding and processing natural language. Your task is to cluster similar sentences together based on their meaning, assigning each sentence to one or more clusters with varying degrees of membership. Follow these instructions carefully:
+    You are a sophisticated language model capable of understanding and processing natural language. Your task is to cluster similar sentences together based on their meaning, assigning each sentence to one or more clusters with varying degrees of membership. Follow these instructions carefully:
 
-  1. Input: You will be provided with a list of sentences, each identified by a unique ID.
+    1. Input: You will be provided with a list of sentences, each identified by a unique ID.
 
-  2. Clustering Criteria:
-      - Semantic Similarity: Group sentences that convey similar meanings, even if they use different words or structures.
-      - Contextual Relevance: Sentences should be grouped with clusters relevant to the same topic or idea.
-      - Paraphrasing: Sentences that are paraphrases of each other should be clustered with higher degrees of membership.
-      - Fuzzy Membership: Assign each sentence a membership degree between 0 and 1 for different clusters, with the highest degree indicating the most likely cluster.
+    2. Clustering Criteria:
+        - Semantic Similarity: Group sentences that convey similar meanings, even if they use different words or structures.
+        - Contextual Relevance: Sentences should be grouped with clusters relevant to the same topic or idea.
+        - Paraphrasing: Sentences that are paraphrases of each other should be clustered with higher degrees of membership.
+        - Fuzzy Membership: Assign each sentence a membership degree between 0 and 1 for different clusters, with the highest degree indicating the most likely cluster.
 
-  3. Output:
-      - Output your response in a JSON format.
-      - Return a list of tuples, where each tuple represents a sentence ID and a list of cluster memberships.
-      - Each membership should be represented as a tuple (cluster_id, membership_degree), where membership_degree is a float between 0 and 1.
-      - Ensure that all sentence IDs are included with at least one cluster membership.
-      - Omit any clusters with a 0 membership degree from the output.
+    3. Output:
+        - Output your response in a JSON format.
+        - Return a list of tuples, where each tuple represents a sentence ID and a list of cluster memberships.
+        - Each membership should be represented as a tuple (cluster_id, membership_degree), where membership_degree is a float between 0 and 1.
+        - Ensure that all sentence IDs are included with at least one cluster membership.
+        - Omit any clusters with a 0 membership degree from the output.
 
-  Example:
+    Example:
 
-  Input:
-  [ID: 1] The cat sat on the mat.
-  [ID: 2] A quick brown fox jumps over the lazy dog.
-  [ID: 3] There is a cat sitting on the mat.
-  [ID: 4] The dog lay lazily as the fox jumped over it.
-  [ID: 5] Cats are known to sit on mats.
-  [ID: 6] Foxes are swift and can jump high.
+    Input:
+    [ID: 1] The cat sat on the mat.
+    [ID: 2] A quick brown fox jumps over the lazy dog.
+    [ID: 3] There is a cat sitting on the mat.
+    [ID: 4] The dog lay lazily as the fox jumped over it.
+    [ID: 5] Cats are known to sit on mats.
+    [ID: 6] Foxes are swift and can jump high.
 
-  Output:
-  {
-    1: [(0, 0.9), (1, 0.1)],
-    2: [(1, 1.0)]),
-    3: [(0, 0.85), (1, 0.15)],
-    4: [(1, 0.9), (2, 0.1)],
-    5: [(0, 0.8), (1, 0.2)],
-    6: [(1, 0.9), (2, 0.1)]
-  }
+    Output:
+    {
+      1: [(0, 0.9), (1, 0.1)],
+      2: [(1, 1.0)]),
+      3: [(0, 0.85), (1, 0.15)],
+      4: [(1, 0.9), (2, 0.1)],
+      5: [(0, 0.8), (1, 0.2)],
+      6: [(1, 0.9), (2, 0.1)]
+    }
 
-  Please cluster the sentence IDs below according to the criteria mentioned above.
+    Please cluster the sentence IDs below according to the criteria mentioned above.
 
-  Sentences for Clustering:
-  {documents}
-  
-  {k_info}
+    Sentences for Clustering:
+    {documents}
 
-  Output:
+    {k_info}
+
+    Output:
 

@@ -1,6 +1,7 @@
 from enum import Enum
 import os
 import yaml
+import logging
 
 
 class PromptType(Enum):
@@ -10,8 +11,10 @@ class PromptType(Enum):
 
 
 def generate_prompt(prompt_type: PromptType, **kwargs):
+    logger = logging.getLogger('default')
     # Load the YAML file
-    prompt_file = os.join(os.getenv('LLM_CLUSTERING_BASE_DIR', ''), 'prompts', f'{prompt_type.value}.yaml')
+    prompt_file = os.path.join(os.getenv('LLM_CLUSTERING_BASE_DIR', ''), 'prompts', f'{prompt_type.value}.yaml')
+    logger.debug(f"Loading prompt file {prompt_file}")
     with open(prompt_file, 'r') as file:
         template_prompt = yaml.safe_load(file)
 

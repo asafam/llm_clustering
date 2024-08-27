@@ -5,9 +5,9 @@ import logging
 
 
 class PromptType(Enum):
-    HardLabelsClusteringPrompt = 'fuzzy_label_clustering_prompt',
-    FuzzyLabelsClusteringPrompt = 'fuzzy_label_clustering_prompt',
-    MustLinkCannotLinkClusteringPrompt = 'must_link_cannot_link_clustering_prompt',
+    HardLabelsClusteringPrompt = 'fuzzy_label_clustering_prompt'
+    FuzzyLabelsClusteringPrompt = 'fuzzy_label_clustering_prompt'
+    MustLinkCannotLinkClusteringPrompt = 'must_link_cannot_link_clustering_prompt'
 
 
 def generate_prompt(prompt_type: PromptType, **kwargs):

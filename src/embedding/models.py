@@ -26,8 +26,8 @@ class UniversalTextEmbeddingModel(TextEmbeddingModel):
     def __init__(self, model_name: EmbeddingModelName) -> None:
         super().__init__()
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModel.from_pretrained(model_name, trust_remote_code=True).to(self.device)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name.value)
+        self.model = AutoModel.from_pretrained(model_name.value, trust_remote_code=True).to(self.device)
         
     def embed(self, texts, batch_size: int = 128):
         """

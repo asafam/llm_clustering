@@ -28,9 +28,9 @@ class TextLabelDataset(Dataset):
 
 def load_dataset_by_name(dataset_name: DatasetName, subset: str = 'test') -> TextLabelDataset:
     dataset = None
-    if dataset_name == 'CLINC':
+    if dataset_name == DatasetName.CLINC:
         dataset = load_dataset('clinc_oos', 'small')
-    elif dataset_name == 'BANKING77':
+    elif dataset_name == DatasetName.BANKING77:
         dataset = load_dataset('banking77')
     
     text_column = get_text_column(dataset_name=dataset_name)

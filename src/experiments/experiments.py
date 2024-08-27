@@ -1,6 +1,5 @@
 import pandas as pd
-from models.embedding import TextEmbeddingModel
-from clustering.constraints import ClusteringConstraints
+from embedding.models import TextEmbeddingModel
 from clustering.models import ClusteringModel
 from clustering.utils import assess_clustering
 from experiments.utils import embed

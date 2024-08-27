@@ -1,7 +1,7 @@
 from typing import *
 from llms.models import *
 from llms.utils import generate_prompt
-from utils import get_prompt_type
+from experiments.utils import get_prompt_type
 from clustering.constraints import *
 from clustering.constraints_manager import ConstraintsType, generate_constraint
 

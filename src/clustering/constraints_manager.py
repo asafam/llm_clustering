@@ -1,5 +1,5 @@
 from enum import Enum
-from constraints import *
+from clustering.constraints import *
 
 
 class ConstraintsType(Enum):

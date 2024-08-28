@@ -65,6 +65,7 @@ class HardLabelsKMeans(BaseKMeans):
         logger.debug(f"Optimizing clustering for coarse range of k ({min_k}, {max_k}, {k_optimization_coarse_step_size})")
         coarse_k_values = range(min_k, max_k + 1, k_optimization_coarse_step_size)  # Every 10th value
         coarse_scores = []
+        coarse_labels = []
 
         for k in coarse_k_values:
             labels, _ = self._hard_constrained_kmeans(
@@ -77,16 +78,19 @@ class HardLabelsKMeans(BaseKMeans):
             )
             score = k_optimization.score(X, labels)
             coarse_scores.append(score)
+            coarse_labels.append(labels)
 
         # Find the best k in the coarse search
-        best_k = coarse_k_values[coarse_scores.index(max(coarse_scores))]
         best_score = max(coarse_scores)
+        best_k = coarse_k_values[coarse_scores.index(best_score)]
+        best_labels = coarse_labels[coarse_scores.index(best_score)]
 
         if k_optimization_coarse_step_size > 1 and k_optimization_fine_range > 0:
             # Fine search around the best coarse k
             logger.debug(f"Optimizing clustering for fine range of k: ({max(min_k, best_k - k_optimization_fine_range + 1)}, {min(max_k, best_k + k_optimization_fine_range)})")
             fine_k_values = range(max(min_k, best_k - k_optimization_fine_range + 1), min(max_k, best_k + k_optimization_fine_range))  # ±k_optimization_fine_range around best coarse k
             fine_scores = []
+            fine_labels = []
 
             for k in fine_k_values:
                 labels, _ = self._hard_constrained_kmeans(
@@ -99,12 +103,14 @@ class HardLabelsKMeans(BaseKMeans):
                 )
                 score = k_optimization.score(X, labels)
                 fine_scores.append(score)
+                fine_labels.append(labels)
 
             # Find the best k in the fine search
-            best_k = fine_k_values[fine_scores.index(max(fine_scores))]
             best_score = max(coarse_scores)
+            best_k = fine_k_values[fine_scores.index(best_score)]
+            best_labels = fine_labels[coarse_scores.index(best_score)]
 
-        return best_k, best_score
+        return best_labels
 
     def _hard_constrained_kmeans(self, X, hard_labels: dict, n_clusters: int, max_iter: int = 300, tol: float = 1e-4, random_state: int = 42):
         n_samples, n_features = X.shape

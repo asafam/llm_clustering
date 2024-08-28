@@ -10,5 +10,5 @@ class KOptimization:
     
 
 class SilhouetteKOptimization(KOptimization):
-    def score(self, **kwargs) -> int:
-        return silhouette_score(**kwargs)
+    def score(self, X, labels) -> int:
+        return silhouette_score(X, labels)

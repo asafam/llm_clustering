@@ -1,5 +1,4 @@
-import anthropic
-import os
+from anthropic import AnthropicBedrock
 import ast
 
 
@@ -12,12 +11,15 @@ class LLM:
         
 
 class Claude(LLM):
-    def __init__(self, model) -> None:
+    def __init__(self, model, aws_region) -> None:
         super().__init__()
         self.model = model
+        self.aws_region = aws_region
 
     def create_messages(self, prompt: str, max_tokens: int = 1024, temperature=0):
-        client = anthropic.Anthropic()
+        client = AnthropicBedrock(
+            aws_region=self.aws_region,
+        )
 
         response = client.messages.create(
             model=self.model,

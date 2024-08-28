@@ -16,7 +16,8 @@ def generate_prompt(prompt_type: PromptType, **kwargs):
     prompt_file = os.path.join(os.getenv('LLM_CLUSTERING_BASE_DIR', ''), 'prompts', f'{prompt_type.value}.yaml')
     logger.debug(f"Loading prompt file {prompt_file}")
     with open(prompt_file, 'r') as file:
-        template_prompt = yaml.safe_load(file)
+        data = yaml.safe_load(file)
+        template_prompt = data[0]['prompt']
 
     # Format the texts as [ID: {index}] {text}
     texts = kwargs.get('texts')

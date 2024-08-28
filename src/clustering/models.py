@@ -59,10 +59,10 @@ class HardLabelsKMeans(BaseKMeans):
         hard_labels = constraint.instances
         
         logger = logging.getLogger('default')
-        logger.debug(f"Optimizing clustering for range of k ({min_k}, {max_k})")
         
         # Find the best k in the coarse search
         # Coarse search over a large range
+        logger.debug(f"Optimizing clustering for coarse range of k ({min_k}, {max_k}, {k_optimization_coarse_step_size})")
         coarse_k_values = range(min_k, max_k + 1, k_optimization_coarse_step_size)  # Every 10th value
         coarse_scores = []
 
@@ -84,6 +84,7 @@ class HardLabelsKMeans(BaseKMeans):
 
         if k_optimization_coarse_step_size > 1 and k_optimization_fine_range > 0:
             # Fine search around the best coarse k
+            logger.debug(f"Optimizing clustering for fine range of k: ({max(min_k, best_k - k_optimization_fine_range + 1)}, {min(max_k, best_k + k_optimization_fine_range)})")
             fine_k_values = range(max(min_k, best_k - k_optimization_fine_range + 1), min(max_k, best_k + k_optimization_fine_range))  # ±k_optimization_fine_range around best coarse k
             fine_scores = []
 

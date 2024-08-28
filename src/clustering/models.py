@@ -13,14 +13,14 @@ class ClusteringModel:
         return self.__class__.__name__
 
 
-class KMeans(ClusteringModel):
+class BaseKMeans(ClusteringModel):
     def cluster(self, X, n_clusters: int, random_state: int = 42):
         kmeans = KMeans(n_clusters=n_clusters, random_state=random_state)
         labels = kmeans.fit_predict(X)
         return labels
 
 
-class HardLabelsKMeans(KMeans):
+class HardLabelsKMeans(BaseKMeans):
     def cluster(
             self, 
             X, 

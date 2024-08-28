@@ -12,11 +12,15 @@ class LLM:
         
 
 class Claude(LLM):
+    def __init__(self, model) -> None:
+        super().__init__()
+        self.model = model
+
     def create_messages(self, prompt: str, max_tokens: int = 1024, temperature=0):
         client = anthropic.Anthropic()
 
         response = client.messages.create(
-            model=os.getenv("AWS_CLAUDE_MODEL"),
+            model=self.model,
             max_tokens=max_tokens,
             temperature=temperature,
             messages=[

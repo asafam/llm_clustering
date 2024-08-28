@@ -29,7 +29,7 @@ class UniversalTextEmbeddingModel(TextEmbeddingModel):
         logger = logging.getLogger('default')
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         logger.debug(f"Loading UniversalTextEmbeddingModel {model_name.value}")
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name.value)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name.value, force_download=False)
         self.model = AutoModel.from_pretrained(model_name.value, trust_remote_code=True, force_download=False).to(self.device)
         
     def embed(self, texts):

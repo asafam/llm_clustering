@@ -21,7 +21,7 @@ def generate_prompt(prompt_type: PromptType, **kwargs):
     # Format the texts as [ID: {index}] {text}
     texts = kwargs.get('texts')
     text_index_offset = kwargs.get('text_index_offset', 1)
-    formatted_texts = "\n".join([f"[ID: {index + text_index_offset}] {text}" for index, text in enumerate(texts, start=1)])
+    formatted_texts = "\n".join([f"[ID: {index}] {text}" for index, text in enumerate(texts, start=text_index_offset)])
     prompt = template_prompt.replace("{texts}", formatted_texts) # Replace the {texts} placeholder
 
     # Format the k_info 

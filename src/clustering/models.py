@@ -29,7 +29,8 @@ class HardLabelsKMeans(KMeans):
             min_k: int = 2,
             max_k: int = 10, 
             max_iter: int = 300, 
-            tol: float = 1e-4
+            tol: float = 1e-4,
+            random_state: int = 42
         ):
         """
         Finds the best number of clusters using a customizable score function after applying hard constraints.
@@ -60,7 +61,8 @@ class HardLabelsKMeans(KMeans):
                 hard_labels=hard_labels, 
                 n_clusters=k, 
                 max_iter=max_iter, 
-                tol=tol
+                tol=tol,
+                random_state=random_state
             )
             score = k_optimization.score(X, labels)
             if score > best_score:

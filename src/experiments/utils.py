@@ -6,7 +6,7 @@ from llms.utils import PromptType
 
 
 
-def save_experiments(experiments, file_path):
+def save_experiments(experiments, file_path, s3_bucket_name=None, s3_object_base_path=None):
     logger = logging.getLogger('default')
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     

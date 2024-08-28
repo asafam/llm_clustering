@@ -12,6 +12,8 @@ from clustering.utils import evaluate_clustering
 from embedding.models import TextEmbeddingModel
 from llms.models import LLM
 from experiments.constrained_models import BaseConstrainedLLM
+from experiments.utils import save_experiments
+import logging
 
 
 def run_experiments(
@@ -28,6 +30,7 @@ def run_experiments(
         batch_size: int = 128,
         random_state: int = 42
     ):
+    logger = logging.getLogger('default')
     # get data
     dataset = load_dataset_by_name(dataset_name=dataset_name)
 
@@ -86,5 +89,7 @@ def run_experiments(
         arguments[arg] = values[arg]
 
     results.update(arguments)
+
+    save_experiments(results, )
 
     return results

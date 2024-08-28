@@ -15,7 +15,7 @@ class BaseConstrainedLLM:
     def create_constraint(self, texts: List[str], k: Optional[int]):
         # generate the prompt
         prompt_type = get_prompt_type(constraint_type=self.constraint_type)
-        prompt = generate_prompt(prompt_type=prompt_type, documents=texts, k=k)
+        prompt = generate_prompt(prompt_type=prompt_type, texts=texts, k=k)
 
         # execute prompt (possibly n times)
         data = self.llm.create_messages(prompt=prompt)

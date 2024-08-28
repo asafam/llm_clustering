@@ -30,6 +30,7 @@ def run_experiments(
         batch_size: int = 128,
         random_state: int = 42
     ):
+    start_datetime = datetime.now()
     logger = logging.getLogger('default')
     # get data
     dataset = load_dataset_by_name(dataset_name=dataset_name)
@@ -90,6 +91,11 @@ def run_experiments(
 
     results.update(arguments)
 
-    save_experiments(results, )
+    end_datetime = datetime.now()
+    results.update(dict(
+        start_datetime=start_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+        end_datetime=end_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+        time_in_seconds=(end_datetime - start_datetime).total_seconds()
+    ))
 
     return results

@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.cluster import KMeans
 from clustering.constraints import *
 from clustering.optimizations import KOptimization, SilhouetteKOptimization
+import logging
 
 
 class ClusteringModel:
@@ -55,6 +56,8 @@ class HardLabelsKMeans(BaseKMeans):
         best_score = -1
         hard_labels = constraint.instances
         
+        logger = logging.getLogger('default')
+        logger.debug(f"Optimizing clustering for range of k ({min_k}, {max_k})")
         for k in range(min_k, max_k + 1):
             labels, _ = self._hard_constrained_kmeans(
                 X=X, 

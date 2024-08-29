@@ -94,9 +94,11 @@ def sample_dataset(
     # sample labels
     unique_labels = df['label'].unique()
 
-    if k > 0:
+    if k is None:
+        selected_labels = []
+    elif k > 0:
         selected_labels = random.sample(list(unique_labels), k)
-    if k == 0:
+    elif k == 0:
         selected_labels = list(unique_labels)
     else:
         selected_labels = []

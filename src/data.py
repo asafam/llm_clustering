@@ -74,7 +74,7 @@ def sample_dataset(
     dataset: TextLabelDataset,
     n: int = 0, 
     k: Optional[int] = None, 
-    min_cluster_size: int = 0, 
+    min_cluster_size: int = 1, 
     random_state: int = 42
 ) -> pd.DataFrame:
     result_df = pd.DataFrame()
@@ -92,35 +92,34 @@ def sample_dataset(
         return result_df
 
     # sample labels
-    if min_cluster_size > 0:
-        unique_labels = df['label'].unique()
+    unique_labels = df['label'].unique()
 
-        if k > 0:
-            selected_labels = random.sample(list(unique_labels), k)
-        if k == 0:
-            selected_labels = list(unique_labels)
-        else:
-            selected_labels = []
+    if k > 0:
+        selected_labels = random.sample(list(unique_labels), k)
+    if k == 0:
+        selected_labels = list(unique_labels)
+    else:
+        selected_labels = []
 
-        k = len(selected_labels)
+    k = len(selected_labels)
 
-        # Sample min_cluster_size documents from each selected intent class
-        if k > 0:
-            # Initialize list to hold sampled documents
-            sampled_documents = []
+    # Sample min_cluster_size documents from each selected intent class
+    if k > 0:
+        # Initialize list to hold sampled documents
+        sampled_documents = []
 
-            min_cluster_size = min(min_cluster_size, math.floor(n / k))
-            for label in selected_labels:
-                label_df = df[df['label'] == label]
-                if min_cluster_size > 0:
-                    sampled_label_df = label_df.sample(n=min(min_cluster_size, len(label_df)), random_state=random_state)
-                else:
-                    sampled_label_df = df.DataFrame()
-                sampled_documents.append(sampled_label_df)
+        min_cluster_size = min(min_cluster_size, math.floor(n / k))
+        for label in selected_labels:
+            label_df = df[df['label'] == label]
+            if min_cluster_size > 0:
+                sampled_label_df = label_df.sample(n=min(min_cluster_size, len(label_df)), random_state=random_state)
+            else:
+                sampled_label_df = df.DataFrame()
+            sampled_documents.append(sampled_label_df)
 
-            # Concatenate all sampled documents into a single DataFrame
-            result_df = pd.concat(sampled_documents)
-    
+        # Concatenate all sampled documents into a single DataFrame
+        result_df = pd.concat(sampled_documents)
+
     if len(result_df) >= n:
         return result_df
 

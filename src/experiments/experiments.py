@@ -31,7 +31,9 @@ class SimpleCluteringExperiment(BaseExperiment):
             clustering_model: ClusteringModel,
             k_optimization: Optional[KOptimization] = None,
             cluster_k_information_type: KInformationType = KInformationType.UnknownK,
-            max_clusters: Optional[int] = 10,
+            min_clusters: int = 2,
+            max_clusters: int = 10,
+            min_cluster_size: int = 0,
             batch_size: int = 128,
             random_state: int = 42
     ):
@@ -51,7 +53,7 @@ class SimpleCluteringExperiment(BaseExperiment):
 
         # sample subset
         k = 0 if cluster_k_information_type == KInformationType.GroundTruthK else None
-        sample_df = sample_dataset(dataset=dataset, n=sample_n, k=k, random_state=random_state)
+        sample_df = sample_dataset(dataset=dataset, n=sample_n, k=k, min_cluster_size=min_cluster_size, random_state=random_state)
         sample_dataset = get_dataset_from_df(sample_df)
 
         # embed the dataset for clustering
@@ -68,7 +70,7 @@ class SimpleCluteringExperiment(BaseExperiment):
         # cluster the dataset using the constraint
         if cluster_k_information_type == KInformationType.UnknownK:
             # if number of clusters is unknown then optimize it
-            labels_pred, best_k = clustering_model.cluster(X, k_optimization=k_optimization, max_k=max_clusters, random_state=random_state)
+            labels_pred, best_k = clustering_model.cluster(X, k_optimization=k_optimization, min_k=min_clusters, max_k=max_clusters, random_state=random_state)
         elif cluster_k_information_type == KInformationType.GroundTruthK:
             # otherwise, provide the true cluster number to the clustering model
             n_clusters = len(set(labels_true))
@@ -105,6 +107,7 @@ class LLMClusteringExperiment(BaseExperiment):
             llm: LLM,
             llm_k_information_type: KInformationType = KInformationType.UnknownK,
             prompt_type: PromptType = PromptType.SimpleClusteringPrompt,
+            min_cluster_size: int = 0,
             random_state: int = 42
     ):
         start_datetime = datetime.now()
@@ -123,7 +126,7 @@ class LLMClusteringExperiment(BaseExperiment):
 
         # sample subset
         k = 0 if llm_k_information_type == KInformationType.GroundTruthK else None
-        sample_df = sample_dataset(dataset=dataset, n=sample_n, k=k, random_state=random_state)
+        sample_df = sample_dataset(dataset=dataset, n=sample_n, k=k, min_cluster_size=min_cluster_size, random_state=random_state)
         logger.debug(f"Sample a dataset of size {sample_df.shape[0]}.")
 
         # embed the dataset for clustering
@@ -169,6 +172,7 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
             cluster_k_information_type: KInformationType = KInformationType.UnknownK, 
             min_clusters: int = 2,
             max_clusters: int = 10,
+            min_cluster_size: int = 0,
             batch_size: int = 128,
             random_state: int = 42
     ):
@@ -188,7 +192,7 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
 
         # sample subset
         k = 0 if llm_k_information_type == KInformationType.GroundTruthK else None
-        sample_df = sample_dataset(dataset=dataset, n=sample_n, k=k, random_state=random_state)
+        sample_df = sample_dataset(dataset=dataset, n=sample_n, k=k, min_cluster_size=min_cluster_size, random_state=random_state)
 
         # run the LLM predictions to create the constraints
         sample_texts = sample_df['text'].tolist()

@@ -37,6 +37,15 @@ class SimpleCluteringExperiment(BaseExperiment):
     ):
         start_datetime = datetime.now()
         logger = logging.getLogger('default')
+
+        # get the arguments of the current execution
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        arguments = {}
+        for arg in args:
+            arguments[arg] = values[arg]
+        logger.info(f"Running experiment with arguments: {arguments}")
+        
         # get data
         dataset = load_dataset_by_name(dataset_name=dataset_name)
 
@@ -76,14 +85,6 @@ class SimpleCluteringExperiment(BaseExperiment):
             labels_pred=labels_pred,
         )
         results.update(scores)
-
-        # get the arguments of the current execution
-        frame = inspect.currentframe()
-        args, _, _, values = inspect.getargvalues(frame)
-        arguments = {}
-        for arg in args:
-            arguments[arg] = values[arg]
-
         results.update(arguments)
 
         end_datetime = datetime.now()
@@ -108,6 +109,15 @@ class LLMClusteringExperiment(BaseExperiment):
     ):
         start_datetime = datetime.now()
         logger = logging.getLogger('default')
+
+        # get the arguments of the current execution
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        arguments = {}
+        for arg in args:
+            arguments[arg] = values[arg]
+        logger.info(f"Running experiment with arguments: {arguments}")
+
         # get data
         dataset = load_dataset_by_name(dataset_name=dataset_name)
 
@@ -133,14 +143,6 @@ class LLMClusteringExperiment(BaseExperiment):
             labels_pred=labels_pred,
         )
         results.update(scores)
-
-        # get the arguments of the current execution
-        frame = inspect.currentframe()
-        args, _, _, values = inspect.getargvalues(frame)
-        arguments = {}
-        for arg in args:
-            arguments[arg] = values[arg]
-
         results.update(arguments)
 
         end_datetime = datetime.now()
@@ -172,6 +174,15 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
     ):
         start_datetime = datetime.now()
         logger = logging.getLogger('default')
+
+        # get the arguments of the current execution
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        arguments = {}
+        for arg in args:
+            arguments[arg] = values[arg]
+        logger.info(f"Running experiment with arguments: {arguments}")
+
         # get data
         dataset = load_dataset_by_name(dataset_name=dataset_name)
 
@@ -221,14 +232,6 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
             labels_pred=labels_pred,
         )
         results.update(scores)
-
-        # get the arguments of the current execution
-        frame = inspect.currentframe()
-        args, _, _, values = inspect.getargvalues(frame)
-        arguments = {}
-        for arg in args:
-            arguments[arg] = values[arg]
-
         results.update(arguments)
 
         end_datetime = datetime.now()

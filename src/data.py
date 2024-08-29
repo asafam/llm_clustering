@@ -116,7 +116,7 @@ def sample_dataset(
             if min_cluster_size > 0:
                 sampled_label_df = label_df.sample(n=min(min_cluster_size, len(label_df)), random_state=random_state)
             else:
-                sampled_label_df = df.DataFrame()
+                sampled_label_df = pd.DataFrame()
             sampled_documents.append(sampled_label_df)
 
         # Concatenate all sampled documents into a single DataFrame

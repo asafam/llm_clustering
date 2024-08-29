@@ -17,7 +17,7 @@ class Claude(LLM):
         self.model = model
         self.aws_region = aws_region
 
-    def create_messages(self, prompt: str, max_tokens: int = 4096, temperature=0):
+    def create_messages(self, prompt: str, max_tokens: int = 16384, temperature=0):
         logger = logging.getLogger('default')
         client = AnthropicBedrock(
             aws_region=self.aws_region,

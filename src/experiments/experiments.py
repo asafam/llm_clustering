@@ -54,12 +54,12 @@ class SimpleCluteringExperiment(BaseExperiment):
         # sample subset
         k = 0 if cluster_k_information_type == KInformationType.GroundTruthK else None
         sample_df = sample_dataset(dataset=dataset, n=sample_n, k=k, min_cluster_size=min_cluster_size, random_state=random_state)
-        sample_dataset = get_dataset_from_df(sample_df)
+        sampled_dataset = get_dataset_from_df(sample_df)
 
         # embed the dataset for clustering
         all_embeddings = []
         all_labels = []
-        dataloader = DataLoader(sample_dataset, batch_size=batch_size, shuffle=False)
+        dataloader = DataLoader(sampled_dataset, batch_size=batch_size, shuffle=False)
         for batch_texts, batch_labels in dataloader:
             batch_embeddings = text_embedding_model.embed(batch_texts)
             all_embeddings.append(batch_embeddings)

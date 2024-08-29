@@ -1,47 +1,240 @@
+from typing import *
+from datetime import datetime
+import inspect
+from torch.utils.data import DataLoader
 import pandas as pd
-from embedding.models import TextEmbeddingModel
+import numpy as np
+from data import DatasetName, load_dataset_by_name, sample_dataset, get_dataset_from_df
+from clustering.constraints_manager import ConstraintsType, KInformationType
 from clustering.models import ClusteringModel
-from clustering.utils import assess_clustering
-from experiments.utils import embed
+from clustering.optimizations import KOptimization
+from clustering.utils import evaluate_clustering
+from embedding.models import TextEmbeddingModel
+from llms.models import LLM
+from llms.utils import PromptType, generate_prompt
+from experiments.constrained_models import BaseConstrainedLLM
+from experiments.utils import save_experiments
+import logging
 
 
 class BaseExperiment:
-    def run(self, df: pd.DataFrame, clustering_model: ClusteringModel, text_embedding_model:TextEmbeddingModel, label_column='label', k_known=False):
-        embedding_label_df = embed(df=df, text_embedding_model=text_embedding_model, label_column=label_column)
-        X = embedding_label_df.drop(columns=['label']).to_numpy()
-        gold_labels = embedding_label_df['label'].to_list()
-        gold_k = len(set(gold_labels))
-        pred_labels = clustering_model.cluster(X, gold_labels, k=(gold_k if k_known else 0))
-        scores = assess_clustering(gold_labels, pred_labels, X)
-
-        return dict(
-            texts=df['text'].tolist(),
-            gold_labels = gold_labels,
-            pred_labels = pred_labels,
-            scores=scores
-        )
+    def run(self):
+        raise NotImplementedError()
     
 
-class LLMConstraintExperiment(BaseExperiment):
-    def run(self, df: pd.DataFrame, clustering_model: ClusteringModel, text_embedding_model: TextEmbeddingModel, label_column='label', k_known=False):
-        # predict with LLM
+class SimpleCluteringExperiment(BaseExperiment):
+    def run(
+            self,
+            dataset_name: DatasetName,
+            sample_n: int, 
+            text_embedding_model: TextEmbeddingModel,
+            clustering_model: ClusteringModel,
+            k_optimization: Optional[KOptimization] = None,
+            cluster_k_information_type: KInformationType = KInformationType.UnknownK,
+            max_clusters: Optional[int] = 10,
+            batch_size: int = 128,
+            random_state: int = 42
+    ):
+        start_datetime = datetime.now()
+        logger = logging.getLogger('default')
+        # get data
+        dataset = load_dataset_by_name(dataset_name=dataset_name)
 
-        # form constraint
-        constraint = 
+        # sample subset
+        k = 0 if cluster_k_information_type == KInformationType.GroundTruthK else None
+        sample_df = sample_dataset(dataset=dataset, n=sample_n, k=k, random_state=random_state)
+        sample_dataset = get_dataset_from_df(sample_df)
 
-        # cluster with constraints
-        embedding_label_df = embed(df=df, text_embedding_model=text_embedding_model, label_column=label_column)
-        X = embedding_label_df.drop(columns=['label']).to_numpy()
-        pred_labels = clustering_model.cluster(X, k=(gold_k if k_known else 0))
+        # embed the dataset for clustering
+        all_embeddings = []
+        all_labels = []
+        dataloader = DataLoader(sample_dataset, batch_size=batch_size, shuffle=False)
+        for batch_texts, batch_labels in dataloader:
+            batch_embeddings = text_embedding_model.embed(batch_texts)
+            all_embeddings.append(batch_embeddings)
+            all_labels.extend(batch_labels)
+        X = np.vstack(all_embeddings)
+        labels_true = [tensor.item() for tensor in all_labels]
 
-        # asses results
-        gold_labels = embedding_label_df['label'].to_list()
-        gold_k = len(set(gold_labels))
-        scores = assess_clustering(gold_labels, pred_labels, X)
+        # cluster the dataset using the constraint
+        if cluster_k_information_type == KInformationType.UnknownK:
+            # if number of clusters is unknown then optimize it
+            labels_pred, best_k = clustering_model.cluster(X, k_optimization=k_optimization, max_k=max_clusters, random_state=random_state)
+        elif cluster_k_information_type == KInformationType.GroundTruthK:
+            # otherwise, provide the true cluster number to the clustering model
+            n_clusters = len(set(labels_true))
+            labels_pred = clustering_model.cluster(X, n_clusters=n_clusters, random_state=random_state)
+        else:
+            raise ValueError(f"Illegal cluster_k_information_type given in BaseClustering: {cluster_k_information_type.value}")
 
-        return dict(
-            texts=df['text'].tolist(),
-            gold_labels = gold_labels,
-            pred_labels = pred_labels,
-            scores=scores
+        # compute score for the clustering
+        scores = evaluate_clustering(labels_pred=labels_pred, labels_true=labels_true)
+
+        results = dict(
+            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            labels_true=labels_true,
+            labels_pred=labels_pred,
         )
+        results.update(scores)
+
+        # get the arguments of the current execution
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        arguments = {}
+        for arg in args:
+            arguments[arg] = values[arg]
+
+        results.update(arguments)
+
+        end_datetime = datetime.now()
+        results.update(dict(
+            start_datetime=start_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+            end_datetime=end_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+            time_in_seconds=(end_datetime - start_datetime).total_seconds()
+        ))
+
+        return results
+    
+
+class LLMClusteringExperiment(BaseExperiment):
+    def run(
+            self,
+            dataset_name: DatasetName,
+            sample_n: int, 
+            llm: LLM,
+            llm_k_information_type: KInformationType = KInformationType.UnknownK,
+            prompt_type: PromptType = PromptType.SimpleClusteringPrompt,
+            random_state: int = 42
+    ):
+        start_datetime = datetime.now()
+        logger = logging.getLogger('default')
+        # get data
+        dataset = load_dataset_by_name(dataset_name=dataset_name)
+
+        # sample subset
+        k = 0 if llm_k_information_type == KInformationType.GroundTruthK else None
+        sample_df = sample_dataset(dataset=dataset, n=sample_n, k=k, random_state=random_state)
+        logger.debug(f"Sample a dataset of size {sample_df.shape[0]}.")
+
+        # embed the dataset for clustering
+        texts = sample_df['text'].tolist()
+        labels_true = sample_df['label'].tolist()
+        prompt = generate_prompt(prompt_type=prompt_type, texts=texts, k=k)
+        labels_pred = llm.create_messages(prompt)
+        logger.debug(f"LLM generated labels predictions.")
+
+        # compute score for the clustering
+        scores = evaluate_clustering(labels_pred=labels_pred, labels_true=labels_true)
+        logger.debug(f"Computed scores.")
+
+        results = dict(
+            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            labels_true=labels_true,
+            labels_pred=labels_pred,
+        )
+        results.update(scores)
+
+        # get the arguments of the current execution
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        arguments = {}
+        for arg in args:
+            arguments[arg] = values[arg]
+
+        results.update(arguments)
+
+        end_datetime = datetime.now()
+        results.update(dict(
+            start_datetime=start_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+            end_datetime=end_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+            time_in_seconds=(end_datetime - start_datetime).total_seconds()
+        ))
+
+        return results
+    
+
+class LLMConstraintedClusteringExperiment(BaseExperiment):
+    def run(
+            self,
+            dataset_name: DatasetName,
+            sample_n: int, 
+            llm: LLM,
+            constraint_type: ConstraintsType,
+            text_embedding_model: TextEmbeddingModel,
+            clustering_model: ClusteringModel,
+            llm_k_information_type: KInformationType = KInformationType.UnknownK,
+            k_optimization: Optional[KOptimization] = None,
+            cluster_k_information_type: KInformationType = KInformationType.UnknownK, 
+            max_clusters: Optional[int] = 10,
+            batch_size: int = 128,
+            random_state: int = 42
+    ):
+        start_datetime = datetime.now()
+        logger = logging.getLogger('default')
+        # get data
+        dataset = load_dataset_by_name(dataset_name=dataset_name)
+
+        # sample subset
+        k = 0 if llm_k_information_type == KInformationType.GroundTruthK else None
+        sample_df = sample_dataset(dataset=dataset, n=sample_n, k=k, random_state=random_state)
+
+        # run the LLM predictions to create the constraints
+        sample_texts = sample_df['text'].tolist()
+        constraint_model = BaseConstrainedLLM(llm=llm, constraint_type=constraint_type)
+        constraint = constraint_model.create_constraint(texts=sample_texts, k=k)
+
+        # embed the dataset for clustering
+        all_embeddings = []
+        all_labels = []
+        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+        for batch_texts, batch_labels in dataloader:
+            batch_embeddings = text_embedding_model.embed(batch_texts)
+            all_embeddings.append(batch_embeddings)
+            all_labels.extend(batch_labels)
+        X = np.vstack(all_embeddings)
+        labels_true = [tensor.item() for tensor in all_labels]
+        
+        # cluster the dataset using the constraint
+        if cluster_k_information_type == KInformationType.UnknownK:
+            # if number of clusters is unknown then optimize it
+            labels_pred, best_k = clustering_model.cluster(X, constraint=constraint, k_optimization=k_optimization, max_k=max_clusters, random_state=random_state)
+        elif cluster_k_information_type == KInformationType.GroundTruthK:
+            # otherwise, provide the true cluster number to the clustering model
+            n_clusters = len(set(labels_true))
+            labels_pred = clustering_model.cluster(X, constraint=constraint, n_clusters=n_clusters, random_state=random_state)
+        elif cluster_k_information_type == KInformationType.OracleK:
+            # or else, provide the predicted cluster number (if we can extract it from the constraint) to the clustering model
+            if constraint.labels is None:
+                logger.error(f"No labels were correctly predicted running with constraint {constraint_type.value}")
+            else:
+                labels_oracle_pred = constraint.labels
+                n_clusters = len(set(labels_oracle_pred))
+                labels_pred = clustering_model.cluster(X, constraint=constraint, n_clusters=n_clusters, random_state=random_state)
+
+        # compute score for the clustering
+        scores = evaluate_clustering(labels_pred=labels_pred, labels_true=labels_true, X=X)
+
+        results = dict(
+            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            labels_true=labels_true,
+            labels_pred=labels_pred,
+        )
+        results.update(scores)
+
+        # get the arguments of the current execution
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        arguments = {}
+        for arg in args:
+            arguments[arg] = values[arg]
+
+        results.update(arguments)
+
+        end_datetime = datetime.now()
+        results.update(dict(
+            start_datetime=start_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+            end_datetime=end_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+            time_in_seconds=(end_datetime - start_datetime).total_seconds()
+        ))
+
+        return results

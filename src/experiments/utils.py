@@ -1,5 +1,6 @@
 import os
 import pickle
+import boto3
 import logging
 from clustering.constraints_manager import ConstraintsType
 from llms.utils import PromptType
@@ -13,6 +14,13 @@ def save_experiments(experiments, file_path, s3_bucket_name=None, s3_object_base
     with open(file_path, 'wb') as file:
         pickle.dump(experiments, file)
     logger.debug(f"{len(experiments)} experiments saved to {file_path}")
+
+    if s3_bucket_name and s3_object_base_path:
+        file_name = os.path.basename(file_path)
+        s3_client = boto3.client('s3')
+        s3_object_name = os.path.join(s3_object_base_path, file_name)
+        s3_client.upload_file(file_path, s3_bucket_name, s3_object_name)
+        logger.debug(f"Experiments file {file_path} uploaded to {s3_bucket_name}/{s3_object_base_path}")
 
     
 def load_experiments(file_path):
@@ -41,4 +49,3 @@ def get_prompt_type(constraint_type: ConstraintsType):
         return PromptType.FuzzyLabelsClusteringPrompt
     elif constraint_type == ConstraintsType.MustLinkCannotLinkConstraints:
         return PromptType.MustLinkCannotLinkClusteringPrompt
-

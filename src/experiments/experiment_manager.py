@@ -4,6 +4,7 @@ import inspect
 from torch.utils.data import DataLoader
 import pandas as pd
 import numpy as np
+from experiments import *
 from data import DatasetName, load_dataset_by_name, sample_dataset
 from clustering.constraints_manager import ConstraintsType, KInformationType
 from clustering.models import ClusteringModel
@@ -17,19 +18,26 @@ import logging
 
 
 def run_experiments(
-        dataset_name: DatasetName,
-        sample_n: int, 
-        llm: LLM,
-        constraint_type: ConstraintsType,
-        text_embedding_model: TextEmbeddingModel,
-        clustering_model: ClusteringModel,
-        oracle_k_information_type: KInformationType = KInformationType.UnknownK,
-        k_optimization: Optional[KOptimization] = None,
-        cluster_k_information_type: KInformationType = KInformationType.UnknownK, 
-        max_clusters: Optional[int] = 10,
-        batch_size: int = 128,
-        random_state: int = 42
-    ):
+    experiment: BaseExperiment,
+    random_state: int = 42
+):
+    experiment.run()
+
+
+def run_experiments(
+    dataset_name: DatasetName,
+    sample_n: int, 
+    llm: LLM,
+    constraint_type: ConstraintsType,
+    text_embedding_model: TextEmbeddingModel,
+    clustering_model: ClusteringModel,
+    oracle_k_information_type: KInformationType = KInformationType.UnknownK,
+    k_optimization: Optional[KOptimization] = None,
+    cluster_k_information_type: KInformationType = KInformationType.UnknownK, 
+    max_clusters: Optional[int] = 10,
+    batch_size: int = 128,
+    random_state: int = 42
+):
     start_datetime = datetime.now()
     logger = logging.getLogger('default')
     # get data
@@ -71,6 +79,72 @@ def run_experiments(
             labels_oracle_pred = constraint.labels
             n_clusters = len(set(labels_oracle_pred))
             labels_pred = clustering_model.cluster(X, constraint=constraint, n_clusters=n_clusters, random_state=random_state)
+
+    # compute score for the clustering
+    scores = evaluate_clustering(labels_pred=labels_pred, labels_true=labels_true, X=X)
+
+    results = dict(
+        timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        labels_true=labels_true,
+        labels_pred=labels_pred,
+    )
+    results.update(scores)
+
+    # get the arguments of the current execution
+    frame = inspect.currentframe()
+    args, _, _, values = inspect.getargvalues(frame)
+    arguments = {}
+    for arg in args:
+        arguments[arg] = values[arg]
+
+    results.update(arguments)
+
+    end_datetime = datetime.now()
+    results.update(dict(
+        start_datetime=start_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+        end_datetime=end_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+        time_in_seconds=(end_datetime - start_datetime).total_seconds()
+    ))
+
+    return results
+
+
+
+def run_simple_experiments(
+        dataset_name: DatasetName,
+        sample_n: int, 
+        llm: LLM,
+        text_embedding_model: TextEmbeddingModel,
+        clustering_model: ClusteringModel,
+        oracle_k_information_type: KInformationType = KInformationType.UnknownK,
+        k_optimization: Optional[KOptimization] = None,
+        max_clusters: Optional[int] = 10,
+        batch_size: int = 128,
+        random_state: int = 42
+    ):
+    start_datetime = datetime.now()
+    logger = logging.getLogger('default')
+    # get data
+    dataset = load_dataset_by_name(dataset_name=dataset_name)
+
+    # sample subset
+    k = 0 if oracle_k_information_type == KInformationType.GroundTruthK else None
+    sample_df = sample_dataset(dataset=dataset, n=sample_n, k=k, random_state=random_state)
+
+    # run the LLM predictions to create the constraints
+    sample_texts = sample_df['text'].tolist()
+    labels_pred = 
+
+    # embed the dataset for clustering
+    all_embeddings = []
+    all_labels = []
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    for batch_texts, batch_labels in dataloader:
+        batch_embeddings = text_embedding_model.embed(batch_texts)
+        all_embeddings.append(batch_embeddings)
+        all_labels.extend(batch_labels)
+    X = np.vstack(all_embeddings)
+    labels_true = [tensor.item() for tensor in all_labels]
 
     # compute score for the clustering
     scores = evaluate_clustering(labels_pred=labels_pred, labels_true=labels_true, X=X)

@@ -132,6 +132,7 @@ class LLMClusteringExperiment(BaseExperiment):
         # embed the dataset for clustering
         texts = sample_df['text'].tolist()
         labels_true = sample_df['label'].tolist()
+        k = len(set(labels_true)) if llm_k_information_type == KInformationType.GroundTruthK else None
         prompt = generate_prompt(prompt_type=prompt_type, texts=texts, k=k)
         labels_pred_ = llm.create_messages(prompt)
         labels_pred = [-1] * len(labels_true)
@@ -199,7 +200,9 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
 
         # run the LLM predictions to create the constraints
         sample_texts = sample_df['text'].tolist()
+        sample_labels = sample_df['label'].tolist()
         constraint_model = BaseConstrainedLLM(llm=llm, constraint_type=constraint_type)
+        k = len(set(sample_labels)) if llm_k_information_type == KInformationType.GroundTruthK else None
         constraint = constraint_model.create_constraint(texts=sample_texts, k=k)
 
         # embed the dataset for clustering

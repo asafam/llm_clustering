@@ -165,7 +165,8 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
             llm_k_information_type: KInformationType = KInformationType.UnknownK,
             k_optimization: Optional[KOptimization] = None,
             cluster_k_information_type: KInformationType = KInformationType.UnknownK, 
-            max_clusters: Optional[int] = 10,
+            min_clusters: int = 2,
+            max_clusters: int = 10,
             batch_size: int = 128,
             random_state: int = 42
     ):
@@ -197,7 +198,7 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
         # cluster the dataset using the constraint
         if cluster_k_information_type == KInformationType.UnknownK:
             # if number of clusters is unknown then optimize it
-            labels_pred, best_k = clustering_model.cluster(X, constraint=constraint, k_optimization=k_optimization, max_k=max_clusters, random_state=random_state)
+            labels_pred, best_k = clustering_model.cluster(X, constraint=constraint, k_optimization=k_optimization, min_k=min_clusters, max_k=max_clusters, random_state=random_state)
         elif cluster_k_information_type == KInformationType.GroundTruthK:
             # otherwise, provide the true cluster number to the clustering model
             n_clusters = len(set(labels_true))

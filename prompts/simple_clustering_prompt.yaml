@@ -12,7 +12,6 @@
         - Output your response in a JSON format.
         - Return a dictionary where each key is a sentence ID (represented as an integer)
         - Each value is the cluster ID that the sentence belongs to.
-        - Each sentence ID must be assigned to exactly one cluster.
 
     Example:
 

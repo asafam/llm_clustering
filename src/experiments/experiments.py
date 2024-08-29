@@ -133,8 +133,11 @@ class LLMClusteringExperiment(BaseExperiment):
         texts = sample_df['text'].tolist()
         labels_true = sample_df['label'].tolist()
         prompt = generate_prompt(prompt_type=prompt_type, texts=texts, k=k)
-        labels_pred = llm.create_messages(prompt)
-        logger.debug(f"LLM generated labels predictions.")
+        labels_pred_ = llm.create_messages(prompt)
+        labels_pred = [-1] * len(labels_true)
+        for key, label in labels_pred_.items():
+            labels_pred[key-1] = label
+        logger.debug(f"LLM generated {len(set(labels_pred))} labels predictions.")
 
         # compute score for the clustering
         scores = evaluate_clustering(labels_pred=labels_pred, labels_true=labels_true)

@@ -11,7 +11,7 @@ class PromptType(Enum):
     MustLinkCannotLinkClusteringPrompt = 'must_link_cannot_link_clustering_prompt'
 
 
-def generate_prompt(prompt_type: PromptType, **kwargs):
+def generate_prompt(prompt_type: PromptType, text_index_offset: int = 1, **kwargs):
     logger = logging.getLogger('default')
     # Load the YAML file
     prompt_file = os.path.join(os.getenv('LLM_CLUSTERING_BASE_DIR', ''), 'prompts', f'{prompt_type.value}.yaml')

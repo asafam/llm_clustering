@@ -28,6 +28,6 @@ def generate_prompt(prompt_type: PromptType, text_index_offset: int = 1, **kwarg
 
     # Format the k_info 
     k = kwargs.get('k')
-    prompt = prompt.replace("{k_info}\n\n", f"Number of clusters: {k}\n\n" if k > 0 and k is not None else "") # Replace the {k_info} placeholder
+    prompt = prompt.replace("{k_info}\n\n", f"Number of clusters: {k}\n\n" if (k is not None and k > 0) else "") # Replace the {k_info} placeholder
 
     return prompt

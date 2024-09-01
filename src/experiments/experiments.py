@@ -26,12 +26,10 @@ class BaseExperiment:
         logger = logging.getLogger('default')
 
         # get the arguments of the current execution
-        frame = inspect.currentframe()
-        args, _, _, values = inspect.getargvalues(frame)
         arguments = {}
-        for arg in args:
-            if arg != 'self':
-                arguments[arg] = get_experiment_results_item_value(values[arg])
+        for key, value in kwargs.items():
+            if key != 'self':
+                arguments[key] = get_experiment_results_item_value(value)
         logger.info(f"Running experiment with arguments: {arguments}")
     
         # run the experiment

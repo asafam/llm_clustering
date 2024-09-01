@@ -1,5 +1,5 @@
 import os
-import pickle
+import json
 import boto3
 import logging
 from clustering.constraints_manager import ConstraintsType
@@ -7,13 +7,14 @@ from llms.utils import PromptType
 from enum import Enum
 
 
-def save_experiments(experiments_results, file_path, s3_bucket_name=None, s3_object_base_path=None):
+def save_experiments(data, file_path, s3_bucket_name=None, s3_object_base_path=None):
     logger = logging.getLogger('default')
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     
     with open(file_path, 'wb') as file:
-        pickle.dump(experiments_results, file)
-    logger.debug(f"{len(experiments_results)} experiments results saved to {file_path}")
+        json.dump(data, file, indent=4)
+
+    logger.debug(f"{len(data)} experiments results saved to {file_path}")
 
     if s3_bucket_name and s3_object_base_path:
         file_name = os.path.basename(file_path)
@@ -30,7 +31,7 @@ def load_experiments(file_path):
         return None
     
     with open(file_path, 'rb') as file:
-        experiments = pickle.load(file)
+        experiments = json.load(file)
     logger.debug(f"{len(experiments)} experiments loaded from {file_path}")
     return experiments
 
@@ -43,7 +44,7 @@ def is_experiment_completed(experiments_results, **kwargs):
 
 
 def get_experiment_results_item_value(item):
-    if isinstance(item, (int, float, str, bool, Enum, type(None))):
+    if isinstance(item, (int, float, str, bool, type(None))):
         return item
     else:
         str(item)

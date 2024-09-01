@@ -10,8 +10,8 @@
 
     3. Output:
         - Output your response in a JSON format.
-        - Return a dictionary where each key is a sentence ID (represented as an integer)
-        - Each value is the cluster ID that the sentence belongs to.
+        - Return a dictionary where each key is a cluster ID (represented as an integer)
+        - Each value is a list of sentence IDs that the cluster belongs to.
 
     Example:
 
@@ -25,12 +25,8 @@
 
     Output:
     {
-        1: 0,
-        2: 1,
-        3: 0,
-        4: 1,
-        5: 0,
-        6: 1
+        0: [1, 3, 5],
+        1: [2, 4, 6]
     }
 
     Please cluster the sentence IDs below according to the criteria mentioned above.

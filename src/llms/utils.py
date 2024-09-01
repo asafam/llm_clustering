@@ -31,3 +31,11 @@ def generate_prompt(prompt_type: PromptType, text_index_offset: int = 1, **kwarg
     prompt = prompt.replace("{k_info}\n\n", f"Number of clusters: {k}\n\n" if (k is not None and k > 0) else "") # Replace the {k_info} placeholder
 
     return prompt
+
+
+def format_response_as_dictionary_of_clusters(data:dict, size: int) -> list:
+    labels = [-1] * size
+    for label, keys in data.items():
+        for key in keys:
+            labels[key - 1] = label
+    return labels

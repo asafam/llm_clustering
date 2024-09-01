@@ -47,7 +47,7 @@ def get_experiment_results_item_value(item):
     if isinstance(item, (int, float, str, bool, type(None))):
         return item
     else:
-        str(item)
+        return str(item)
 
 def get_prompt_type(constraint_type: ConstraintsType):
     if constraint_type == ConstraintsType.HardLabelsConstraints:

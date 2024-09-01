@@ -32,10 +32,12 @@ class BaseExperiment:
             if arg != 'self':
                 arguments[arg] = get_experiment_results_item_value(values[arg])
         logger.info(f"Running experiment with arguments: {arguments}")
+        results = arguments
 
         # run the experiment
         try:
-            results = self.run(**kwargs)
+            response = self.run(**kwargs)
+            results.update(response)
             results['success'] = True
             logger.debug(f"Experiment status: success")
         except Exception as e:
@@ -43,8 +45,6 @@ class BaseExperiment:
             results['error'] = e
             logger.error(f"Experiment status: Failure.\n{e}")
             logger.error(f"Error with experiment run {args}")
-
-        results.update(arguments)
         
         return results
     

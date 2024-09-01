@@ -45,7 +45,7 @@ class SimpleCluteringExperiment(BaseExperiment):
         args, _, _, values = inspect.getargvalues(frame)
         arguments = {}
         for arg in args:
-            arguments[arg] = values[arg]
+            arguments[arg] = str(values[arg])
         logger.info(f"Running experiment with arguments: {arguments}")
         
         # get data
@@ -108,6 +108,7 @@ class LLMClusteringExperiment(BaseExperiment):
             llm_k_information_type: KInformationType = KInformationType.UnknownK,
             prompt_type: PromptType = PromptType.SimpleClusteringPrompt,
             min_cluster_size: int = 0,
+            llm_max_tokens: int = 8096,
             random_state: int = 42
     ):
         start_datetime = datetime.now()
@@ -118,7 +119,8 @@ class LLMClusteringExperiment(BaseExperiment):
         args, _, _, values = inspect.getargvalues(frame)
         arguments = {}
         for arg in args:
-            arguments[arg] = str(values[arg])
+            if arg != 'self':
+                arguments[arg] = str(values[arg])
         logger.info(f"Running experiment with arguments: {arguments}")
 
         # get data
@@ -134,7 +136,7 @@ class LLMClusteringExperiment(BaseExperiment):
         labels_true = sample_df['label'].tolist()
         k = len(set(labels_true)) if llm_k_information_type == KInformationType.GroundTruthK else None
         prompt = generate_prompt(prompt_type=prompt_type, texts=texts, k=k)
-        labels_pred_ = llm.create_messages(prompt)
+        labels_pred_ = llm.create_messages(prompt, max_tokens=llm_max_tokens)
         labels_pred = [-1] * len(labels_true)
         for key, label in labels_pred_.items():
             labels_pred[key-1] = label

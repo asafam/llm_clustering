@@ -31,6 +31,9 @@ class UniversalTextEmbeddingModel(TextEmbeddingModel):
         logger.debug(f"Loading UniversalTextEmbeddingModel {model_name.value}")
         self.tokenizer = AutoTokenizer.from_pretrained(model_name.value, force_download=False)
         self.model = AutoModel.from_pretrained(model_name.value, trust_remote_code=True, force_download=False).to(self.device)
+    
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}(model_name={self.model_name.value})"
         
     def embed(self, texts):
         """

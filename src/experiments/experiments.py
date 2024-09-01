@@ -45,7 +45,7 @@ class SimpleCluteringExperiment(BaseExperiment):
         args, _, _, values = inspect.getargvalues(frame)
         arguments = {}
         for arg in args:
-            arguments[arg] = str(values[arg])
+            arguments[arg] = values[arg]
         logger.info(f"Running experiment with arguments: {arguments}")
         
         # get data
@@ -120,7 +120,7 @@ class LLMClusteringExperiment(BaseExperiment):
         arguments = {}
         for arg in args:
             if arg != 'self':
-                arguments[arg] = str(values[arg])
+                arguments[arg] = values[arg]
         logger.info(f"Running experiment with arguments: {arguments}")
 
         # get data

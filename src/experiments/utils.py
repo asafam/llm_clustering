@@ -4,16 +4,16 @@ import boto3
 import logging
 from clustering.constraints_manager import ConstraintsType
 from llms.utils import PromptType
+from enum import Enum
 
 
-
-def save_experiments(experiments, file_path, s3_bucket_name=None, s3_object_base_path=None):
+def save_experiments(experiments_results, file_path, s3_bucket_name=None, s3_object_base_path=None):
     logger = logging.getLogger('default')
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     
     with open(file_path, 'wb') as file:
-        pickle.dump(experiments, file)
-    logger.debug(f"{len(experiments)} experiments saved to {file_path}")
+        pickle.dump(experiments_results, file)
+    logger.debug(f"{len(experiments_results)} experiments results saved to {file_path}")
 
     if s3_bucket_name and s3_object_base_path:
         file_name = os.path.basename(file_path)
@@ -35,12 +35,18 @@ def load_experiments(file_path):
     return experiments
 
 
-def is_experiment_completed(experiments, **kwargs):
-    for experiment in experiments:
-        if all(item in experiment.items() for item in kwargs.items()):
+def is_experiment_completed(experiments_results, **kwargs):
+    for experiment_results in experiments_results:
+        if all(get_experiment_results_item_value(item) in experiment_results.items() for item in kwargs.items()):
             return True
     return False
 
+
+def get_experiment_results_item_value(item):
+    if isinstance(item, (int, float, str, bool, Enum, type(None))):
+        return item
+    else:
+        str(item)
 
 def get_prompt_type(constraint_type: ConstraintsType):
     if constraint_type == ConstraintsType.HardLabelsConstraints:

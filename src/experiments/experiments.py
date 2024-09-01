@@ -13,7 +13,7 @@ from embedding.models import TextEmbeddingModel
 from llms.models import LLM
 from llms.utils import PromptType, generate_prompt
 from experiments.constrained_models import BaseConstrainedLLM
-from experiments.utils import save_experiments
+from experiments.utils import get_experiment_results_item_value
 import logging
 
 
@@ -46,7 +46,7 @@ class SimpleClusteringExperiment(BaseExperiment):
         arguments = {}
         for arg in args:
             if arg != 'self':
-                arguments[arg] = values[arg]
+                arguments[arg] = get_experiment_results_item_value(values[arg])
         logger.info(f"Running experiment with arguments: {arguments}")
         
         # get data

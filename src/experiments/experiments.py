@@ -44,7 +44,6 @@ class BaseExperiment:
             results['success'] = False
             results['error'] = traceback.format_exc()
             logger.error(f"Experiment status: Failure.\n{e}")
-            logger.error(f"Error with experiment run {args}")
 
         results['arguments'] = arguments
         

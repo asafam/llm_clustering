@@ -21,6 +21,33 @@ class BaseExperiment:
     def run(self):
         raise NotImplementedError()
     
+    def run_safe(self, **kwargs):
+        logger = logging.getLogger('default')
+
+        # get the arguments of the current execution
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        arguments = {}
+        for arg in args:
+            if arg != 'self':
+                arguments[arg] = get_experiment_results_item_value(values[arg])
+        logger.info(f"Running experiment with arguments: {arguments}")
+
+        # run the experiment
+        try:
+            results = self.run(**kwargs)
+            results['success'] = True
+            logger.debug(f"Experiment status: success")
+        except Exception as e:
+            results['success'] = False
+            results['error'] = e
+            logger.error(f"Experiment status: Failure.\n{e}")
+            logger.error(f"Error with experiment run {args}")
+
+        results.update(arguments)
+        
+        return results
+    
 
 class SimpleClusteringExperiment(BaseExperiment):
     def run(
@@ -38,16 +65,6 @@ class SimpleClusteringExperiment(BaseExperiment):
             random_state: int = 42
     ):
         start_datetime = datetime.now()
-        logger = logging.getLogger('default')
-
-        # get the arguments of the current execution
-        frame = inspect.currentframe()
-        args, _, _, values = inspect.getargvalues(frame)
-        arguments = {}
-        for arg in args:
-            if arg != 'self':
-                arguments[arg] = get_experiment_results_item_value(values[arg])
-        logger.info(f"Running experiment with arguments: {arguments}")
         
         # get data
         dataset = load_dataset_by_name(dataset_name=dataset_name)
@@ -90,7 +107,6 @@ class SimpleClusteringExperiment(BaseExperiment):
             n_clusters=n_clusters
         )
         results.update(scores)
-        results.update(arguments)
 
         end_datetime = datetime.now()
         results.update(dict(

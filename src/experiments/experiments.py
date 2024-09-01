@@ -1,6 +1,7 @@
 from typing import *
 from datetime import datetime
 import inspect
+import traceback
 from torch.utils.data import DataLoader
 import pandas as pd
 import numpy as np
@@ -41,7 +42,7 @@ class BaseExperiment:
         except Exception as e:
             results = dict()
             results['success'] = False
-            results['error'] = e
+            results['error'] = traceback.format_exc()
             logger.error(f"Experiment status: Failure.\n{e}")
             logger.error(f"Error with experiment run {args}")
 

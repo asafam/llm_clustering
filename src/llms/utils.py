@@ -5,7 +5,7 @@ import logging
 
 
 class PromptType(Enum):
-    SimpleClusteringPrompt = 'simple_clustering_prompt'
+    SimpleClusteringPrompt = 'simple_clustering_prompt1'
     HardLabelsClusteringPrompt = 'hard_labels_clustering_prompt'
     FuzzyLabelsClusteringPrompt = 'fuzzy_labels_clustering_prompt'
     MustLinkCannotLinkClusteringPrompt = 'must_link_cannot_link_clustering_prompt'

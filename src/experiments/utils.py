@@ -11,7 +11,7 @@ def save_experiments(data, file_path, s3_bucket_name=None, s3_object_base_path=N
     logger = logging.getLogger('default')
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     
-    with open(file_path, 'wb') as file:
+    with open(file_path, 'w') as file:
         json.dump(data, file, indent=4)
 
     logger.debug(f"{len(data)} experiments results saved to {file_path}")
@@ -30,7 +30,7 @@ def load_experiments(file_path):
         logger.error(f"Could not find experiments file in {file_path}")
         return None
     
-    with open(file_path, 'rb') as file:
+    with open(file_path, 'r') as file:
         experiments = json.load(file)
     logger.debug(f"{len(experiments)} experiments loaded from {file_path}")
     return experiments

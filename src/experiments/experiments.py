@@ -118,7 +118,7 @@ class LLMClusteringExperiment(BaseExperiment):
         args, _, _, values = inspect.getargvalues(frame)
         arguments = {}
         for arg in args:
-            arguments[arg] = values[arg]
+            arguments[arg] = str(values[arg])
         logger.info(f"Running experiment with arguments: {arguments}")
 
         # get data

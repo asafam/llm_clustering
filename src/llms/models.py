@@ -16,6 +16,9 @@ class Claude(LLM):
         super().__init__()
         self.model = model
         self.aws_region = aws_region
+    
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}(model={self.model}, aws_region={self.aws_region})"
 
     def create_messages(self, prompt: str, max_tokens: int = 8192, temperature=0):
         logger = logging.getLogger('default')

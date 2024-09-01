@@ -10,8 +10,8 @@
 
     3. Output:
         - Output your response in a JSON format.
-        - Return a dictionary where each key is a cluster ID (represented as an integer)
-        - Each value is a list of sentence IDs that the cluster belongs to.
+        - Return a dictionary where each key is an instance ID (represented as an integer)
+        - Each value is the cluster that the instance belongs to.
 
     Example:
 

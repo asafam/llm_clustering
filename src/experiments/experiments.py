@@ -45,8 +45,8 @@ class SimpleClusteringExperiment(BaseExperiment):
         args, _, _, values = inspect.getargvalues(frame)
         arguments = {}
         for arg in args:
-            if arg != 'self'
-            arguments[arg] = values[arg]
+            if arg != 'self':
+                arguments[arg] = values[arg]
         logger.info(f"Running experiment with arguments: {arguments}")
         
         # get data

@@ -39,7 +39,7 @@ class Claude(LLM):
         )
 
         data_text = response.content[0].text
-        logger.debug(f"LLM returned message {response.usage}")
+        logger.debug(f"LLM returned message (usage statistics: {response.usage})")
         
         try:
             data = ast.literal_eval(data_text)

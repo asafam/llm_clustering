@@ -26,6 +26,7 @@ class TextEmbeddingModel:
 class UniversalTextEmbeddingModel(TextEmbeddingModel):
     def __init__(self, model_name: EmbeddingModelName) -> None:
         super().__init__()
+        self.model_name = model_name
         logger = logging.getLogger('default')
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         logger.debug(f"Loading UniversalTextEmbeddingModel {model_name.value}")

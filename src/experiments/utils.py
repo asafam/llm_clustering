@@ -38,7 +38,7 @@ def load_experiments(file_path):
 
 def is_experiment_completed(experiments_results, **kwargs):
     for experiment_results in experiments_results:
-        if all(get_experiment_results_item_value(item) in experiment_results.items() for item in kwargs.items()):
+        if all(get_experiment_results_item_value(item) in experiment_results['arguments'].items() for item in kwargs.items()):
             return True
     return False
 

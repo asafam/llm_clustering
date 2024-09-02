@@ -6,6 +6,7 @@ import logging
 
 class PromptType(Enum):
     SimpleClusteringPrompt = 'simple_clustering_prompt1'
+    SimpleClusteringPrompt2 = 'simple_clustering_prompt2'
     HardLabelsClusteringPrompt = 'hard_labels_clustering_prompt'
     FuzzyLabelsClusteringPrompt = 'fuzzy_labels_clustering_prompt'
     MustLinkCannotLinkClusteringPrompt = 'must_link_cannot_link_clustering_prompt'
@@ -33,9 +34,23 @@ def generate_prompt(prompt_type: PromptType, text_index_offset: int = 1, **kwarg
     return prompt
 
 
+def get_formatter(prompt_type: PromptType) -> function:
+    if prompt_type == PromptType.SimpleClusteringPrompt:
+        return format_response_as_dictionary_of_sentences
+    elif prompt_type == PromptType.SimpleClusteringPrompt2:
+        return format_response_as_dictionary_of_clusters
+
+
 def format_response_as_dictionary_of_clusters(data:dict, size: int) -> list:
     labels = [-1] * size
     for label, keys in data.items():
         for key in keys:
             labels[key - 1] = label
+    return labels
+
+
+def format_response_as_dictionary_of_sentences(data:dict, size: int) -> list:
+    labels = [-1] * size
+    for key, label in data.items():
+        labels[key - 1] = label
     return labels

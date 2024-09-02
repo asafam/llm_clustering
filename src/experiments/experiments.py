@@ -12,7 +12,7 @@ from clustering.optimizations import KOptimization
 from clustering.utils import evaluate_clustering
 from embedding.models import TextEmbeddingModel
 from llms.models import LLM
-from llms.utils import PromptType, generate_prompt, format_response_as_dictionary_of_clusters
+from llms.utils import PromptType, generate_prompt, get_formatter
 from experiments.constrained_models import BaseConstrainedLLM
 from experiments.utils import get_experiment_results_item_value
 import logging
@@ -147,7 +147,8 @@ class LLMClusteringExperiment(BaseExperiment):
         k = len(set(labels_true)) if llm_k_information_type == KInformationType.GroundTruthK else None
         prompt = generate_prompt(prompt_type=prompt_type, texts=texts, k=k)
         result = llm.create_messages(prompt, max_tokens=llm_max_tokens)
-        labels_pred = format_response_as_dictionary_of_clusters(data=result, size=len(labels_true))
+        formatter_func = get_formatter(prompt_type=prompt_type)
+        labels_pred = formatter_func(data=result, size=len(labels_true))
         logger.debug(f"LLM generated {len(set(labels_pred))} labels predictions.")
 
         # compute score for the clustering

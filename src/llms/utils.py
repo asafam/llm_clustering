@@ -35,7 +35,7 @@ def generate_prompt(prompt_type: PromptType, text_index_offset: int = 1, **kwarg
     return prompt
 
 
-def get_formatter(prompt_type: PromptType) -> function:
+def get_formatter(prompt_type: PromptType) -> Callable:
     if prompt_type == PromptType.SimpleClusteringPrompt:
         return format_response_as_dictionary_of_sentences
     elif prompt_type == PromptType.SimpleClusteringPrompt2:

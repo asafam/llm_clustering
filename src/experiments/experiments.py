@@ -41,7 +41,8 @@ class BaseExperiment:
             results = dict()
             results['success'] = False
             results['error'] = traceback.format_exc()
-            logger.error(f"Experiment status: Failure.\n{e}")
+            logger.error(f"Experiment status: Failure.")
+            logger.error(f"Exception:\n{traceback.format_exc()}")
 
         results['arguments'] = arguments
         

@@ -1,3 +1,4 @@
+from typing import *
 from enum import Enum
 import os
 import yaml

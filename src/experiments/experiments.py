@@ -148,6 +148,7 @@ class LLMClusteringExperiment(BaseExperiment):
         prompt = generate_prompt(prompt_type=prompt_type, texts=texts, k=k)
         result = llm.create_messages(prompt, max_tokens=llm_max_tokens)
         formatter_func = get_formatter(prompt_type=prompt_type)
+        logger.debug(f"Using {formatter_func} formatter to format the LLM response")
         labels_pred = formatter_func(data=result, size=len(labels_true))
         logger.debug(f"LLM generated {len(set(labels_pred))} labels predictions.")
 

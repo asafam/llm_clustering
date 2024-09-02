@@ -39,6 +39,8 @@ def get_formatter(prompt_type: PromptType) -> function:
         return format_response_as_dictionary_of_sentences
     elif prompt_type == PromptType.SimpleClusteringPrompt2:
         return format_response_as_dictionary_of_clusters
+    else:
+        raise ValueError(f"No formatter found for {prompt_type}")
 
 
 def format_response_as_dictionary_of_clusters(data:dict, size: int) -> list:

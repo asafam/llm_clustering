@@ -5,7 +5,7 @@ import traceback
 from torch.utils.data import DataLoader
 import pandas as pd
 import numpy as np
-from data import DatasetName, load_dataset_by_name, sample_dataset, get_dataset_from_df
+from data import DatasetName, TextLabelDataset, load_dataset_by_name, sample_dataset, get_dataset_from_df
 from clustering.constraints_manager import ConstraintsType, KInformationType
 from clustering.models import ClusteringModel
 from clustering.optimizations import KOptimization
@@ -124,6 +124,7 @@ class LLMClusteringExperiment(BaseExperiment):
             dataset_name: DatasetName,
             sample_n: int, 
             llm: LLM,
+            dataset: Optional[TextLabelDataset] = None,
             llm_k_information_type: KInformationType = KInformationType.UnknownK,
             prompt_type: PromptType = PromptType.SimpleClusteringPrompt,
             min_cluster_size: int = 0,
@@ -134,7 +135,7 @@ class LLMClusteringExperiment(BaseExperiment):
         logger = logging.getLogger('default')
 
         # get data
-        dataset = load_dataset_by_name(dataset_name=dataset_name)
+        dataset = dataset or load_dataset_by_name(dataset_name=dataset_name)
 
         # sample subset
         k = 0 if llm_k_information_type == KInformationType.GroundTruthK else None

@@ -121,10 +121,10 @@ class SimpleClusteringExperiment(BaseExperiment):
 class LLMClusteringExperiment(BaseExperiment):
     def run(
             self,
-            dataset_name: DatasetName,
+            dataset_name: Optional[DatasetName],
+            dataset: Optional[TextLabelDataset],
             sample_n: int, 
             llm: LLM,
-            dataset: Optional[TextLabelDataset] = None,
             llm_k_information_type: KInformationType = KInformationType.UnknownK,
             prompt_type: PromptType = PromptType.SimpleClusteringPrompt,
             min_cluster_size: int = 0,
@@ -135,6 +135,12 @@ class LLMClusteringExperiment(BaseExperiment):
         logger = logging.getLogger('default')
 
         # get data
+        if (dataset_name is not None) and (dataset is not None):
+            raise ValueError("Only one of 'dataset_name' or 'dataset' can be provided, not both.")
+        
+        if (dataset_name is None) and (dataset is None):
+            raise ValueError("You must provide exactly one of 'dataset_name' or 'dataset'.")
+        
         dataset = dataset or load_dataset_by_name(dataset_name=dataset_name)
 
         # sample subset

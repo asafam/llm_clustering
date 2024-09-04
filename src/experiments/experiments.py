@@ -45,7 +45,7 @@ class BaseExperiment:
             logger.error(f"Experiment status: Failure.")
             logger.error(f"Exception:\n{traceback.format_exc()}")
 
-        results['arguments'] = arguments
+        results.update(arguments)
 
         end_datetime = datetime.now()
         results.update(dict(

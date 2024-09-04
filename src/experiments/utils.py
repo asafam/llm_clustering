@@ -36,9 +36,11 @@ def load_experiments(file_path):
     return experiments
 
 
-def is_experiment_completed(experiments_results, **kwargs):
+def is_experiment_completed(experiments_results, excluded_keys = ['dataset'], **kwargs):
     for experiment_results in experiments_results:
-        if all(get_experiment_results_item_value(item) in experiment_results['arguments'].items() for item in kwargs.items()):
+        filtered_experiment_args = {key: get_experiment_results_item_value(value) for key, value in experiment_results['arguments'].items() if key not in excluded_keys}
+        filtered_args = {key: get_experiment_results_item_value(value) for key, value in kwargs.items() if key not in excluded_keys}
+        if all((item in filtered_experiment_args.items()) for item in filtered_args.items()):
             return True
     return False
 
@@ -46,6 +48,7 @@ def is_experiment_completed(experiments_results, **kwargs):
 def get_experiment_results_item_value(item):
     if isinstance(item, (int, float, str, bool, type(None))):
         return item
+    
     else:
         return str(item)
 

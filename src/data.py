@@ -25,6 +25,9 @@ class TextLabelDataset(Dataset):
 
     def __getitem__(self, idx):
         return self.texts[idx], self.labels[idx]
+    
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}{len(self.texts)}"
 
 
 def load_dataset_by_name(dataset_name: DatasetName, subset: str = 'test') -> TextLabelDataset:

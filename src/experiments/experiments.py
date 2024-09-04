@@ -23,6 +23,7 @@ class BaseExperiment:
         raise NotImplementedError()
     
     def run_safe(self, **kwargs):
+        start_datetime = datetime.now()
         logger = logging.getLogger('default')
 
         # get the arguments of the current execution
@@ -45,6 +46,13 @@ class BaseExperiment:
             logger.error(f"Exception:\n{traceback.format_exc()}")
 
         results['arguments'] = arguments
+
+        end_datetime = datetime.now()
+        results.update(dict(
+            start_datetime=start_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+            end_datetime=end_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+            time_in_seconds=(end_datetime - start_datetime).total_seconds()
+        ))
         
         return results
     
@@ -131,7 +139,6 @@ class LLMClusteringExperiment(BaseExperiment):
             llm_max_tokens: int = 8096,
             random_state: int = 42
     ):
-        start_datetime = datetime.now()
         logger = logging.getLogger('default')
 
         # get data
@@ -168,13 +175,6 @@ class LLMClusteringExperiment(BaseExperiment):
             labels_pred=labels_pred,
         )
         results.update(scores)
-
-        end_datetime = datetime.now()
-        results.update(dict(
-            start_datetime=start_datetime.strftime("%Y-%m-%d %H:%M:%S"),
-            end_datetime=end_datetime.strftime("%Y-%m-%d %H:%M:%S"),
-            time_in_seconds=(end_datetime - start_datetime).total_seconds()
-        ))
 
         return results
     

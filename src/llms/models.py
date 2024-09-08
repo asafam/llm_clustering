@@ -20,7 +20,7 @@ class Claude(LLM):
     def __str__(self) -> str:
         return f"{self.__class__.__name__}(model={self.model}, aws_region={self.aws_region})"
 
-    def create_messages(self, prompt: str, max_tokens: int = 8192, temperature=0):
+    def create_messages(self, prompt: str, max_tokens: int = 4096, temperature=0):
         logger = logging.getLogger('default')
         client = AnthropicBedrock(
             aws_region=self.aws_region,
@@ -47,6 +47,3 @@ class Claude(LLM):
         except:
             raise Exception(f"Error casting the response to an object:\n{data_text}")
         
-
-
-

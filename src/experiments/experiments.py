@@ -217,7 +217,7 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
         # embed the dataset for clustering
         all_embeddings = []
         all_labels = []
-        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
         for batch_texts, batch_labels in dataloader:
             batch_embeddings = text_embedding_model.embed(batch_texts)
             all_embeddings.append(batch_embeddings)
@@ -228,7 +228,7 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
         # cluster the dataset using the constraint
         if cluster_k_information_type == KInformationType.UnknownK:
             # if number of clusters is unknown then optimize it
-            labels_pred, best_k = clustering_model.cluster(X, constraint=constraint, k_optimization=k_optimization, min_k=min_clusters, max_k=max_clusters, random_state=random_state)
+            labels_pred = clustering_model.cluster(X, constraint=constraint, k_optimization=k_optimization, min_k=min_clusters, max_k=max_clusters, random_state=random_state)
         elif cluster_k_information_type == KInformationType.GroundTruthK:
             # otherwise, provide the true cluster number to the clustering model
             n_clusters = len(set(labels_true))
@@ -251,7 +251,6 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
             labels_pred=labels_pred,
         )
         results.update(scores)
-        results.update(arguments)
 
         end_datetime = datetime.now()
         results.update(dict(

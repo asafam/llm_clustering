@@ -190,7 +190,9 @@ class HardLabelsKMeans(BaseKMeans):
         centroids = kmeans.cluster_centers_
         
         # Force initial assignment based on hard constraints
-        labels = np.zeros(n_samples, dtype=int)
+        labels = np.full(n_samples, -1, dtype=int)
+
+        # Assign hard constraint labels
         labels[list(hard_labels.keys())] = list(hard_labels.values())
         
         for i in range(max_iter):

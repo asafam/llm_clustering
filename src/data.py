@@ -36,6 +36,8 @@ def load_dataset_by_name(dataset_name: DatasetName, subset: str = 'test') -> Tex
         dataset = load_dataset('clinc_oos', 'small')
     elif dataset_name == DatasetName.BANKING77:
         dataset = load_dataset('banking77')
+    else:
+        raise ValueError(f"No supported dataset {dataset_name}")
     
     text_column = get_text_column(dataset_name=dataset_name)
     label_column = get_label_column(dataset_name=dataset_name)

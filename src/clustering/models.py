@@ -101,6 +101,7 @@ class HardLabelsKMeans(BaseKMeans):
             max_iter: int = 300,
             k_optimization_coarse_step_size: int = 10,
             k_optimization_fine_range: int = 10,
+            k_optimization_fine_step_step_size: int = 1,
             tol: float = 1e-4,
             random_state: int = 42
         ):
@@ -157,7 +158,7 @@ class HardLabelsKMeans(BaseKMeans):
         if k_optimization_coarse_step_size > 1 and k_optimization_fine_range > 0:
             # Fine search around the best coarse k
             logger.debug(f"Optimizing clustering for fine range of k: ({max(min_k, best_k - k_optimization_fine_range + 1)}, {min(max_k, best_k + k_optimization_fine_range)})")
-            fine_k_values = range(max(min_k, best_k - k_optimization_fine_range + 1), min(max_k, best_k + k_optimization_fine_range))  # ±k_optimization_fine_range around best coarse k
+            fine_k_values = range(max(min_k, best_k - k_optimization_fine_range + 1), min(max_k, best_k + k_optimization_fine_range), k_optimization_fine_step_step_size)  # ±k_optimization_fine_range around best coarse k
             fine_scores = []
             fine_labels = []
 
@@ -198,7 +199,7 @@ class HardLabelsKMeans(BaseKMeans):
         for i in range(max_iter):
             # Assignment step
             for j in range(n_samples):
-                if j not in hard_labels:
+                if j not in hard_labels: # Only assign points without hard labels
                     distances = np.linalg.norm(X[j] - centroids, axis=1)
                     labels[j] = np.argmin(distances)
             

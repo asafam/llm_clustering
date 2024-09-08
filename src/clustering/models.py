@@ -85,7 +85,7 @@ class BaseKMeans(ClusteringModel):
             # Find the best k in the fine search
             best_score = max(fine_scores)
             best_k = fine_k_values[fine_scores.index(best_score)]
-            best_labels = fine_labels[coarse_scores.index(best_score)]
+            best_labels = fine_labels[fine_scores.index(best_score)]
 
         return best_labels
 
@@ -178,7 +178,7 @@ class HardLabelsKMeans(BaseKMeans):
             # Find the best k in the fine search
             best_score = max(fine_scores)
             best_k = fine_k_values[fine_scores.index(best_score)]
-            best_labels = fine_labels[coarse_scores.index(best_score)]
+            best_labels = fine_labels[fine_scores.index(best_score)]
 
         return best_labels
 

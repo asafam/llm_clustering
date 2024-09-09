@@ -96,8 +96,8 @@ class SimpleClusteringExperiment(BaseExperiment):
         # cluster the dataset using the constraint
         if cluster_k_information_type == KInformationType.UnknownK:
             # if number of clusters is unknown then optimize it
-            labels_pred, best_k = clustering_model.cluster(X, k_optimization=k_optimization, min_k=min_clusters, max_k=max_clusters, random_state=random_state)
-            n_clusters = best_k
+            labels_pred = clustering_model.cluster(X, k_optimization=k_optimization, min_k=min_clusters, max_k=max_clusters, random_state=random_state)
+            n_clusters = len(set(labels_pred))
         elif cluster_k_information_type == KInformationType.GroundTruthK:
             # otherwise, provide the true cluster number to the clustering model
             n_clusters = len(set(labels_true))

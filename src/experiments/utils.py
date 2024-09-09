@@ -12,7 +12,7 @@ def save_experiments(data, file_path, s3_bucket_name=None, s3_object_base_path=N
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     
     with open(file_path, 'w') as file:
-        pickle.dump(data, file, indent=4)
+        pickle.dump(data, file)
 
     logger.debug(f"{len(data)} experiments results saved to {file_path}")
 

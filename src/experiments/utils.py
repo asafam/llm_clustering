@@ -1,5 +1,5 @@
 import os
-import json
+import pickle
 import boto3
 import logging
 from clustering.constraints_manager import ConstraintsType
@@ -12,7 +12,7 @@ def save_experiments(data, file_path, s3_bucket_name=None, s3_object_base_path=N
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     
     with open(file_path, 'w') as file:
-        json.dump(data, file, indent=4)
+        pickle.dump(data, file, indent=4)
 
     logger.debug(f"{len(data)} experiments results saved to {file_path}")
 
@@ -31,7 +31,7 @@ def load_experiments(file_path):
         return None
     
     with open(file_path, 'r') as file:
-        experiments = json.load(file)
+        experiments = pickle.load(file)
     logger.debug(f"{len(experiments)} experiments loaded from {file_path}")
     return experiments
 

@@ -50,8 +50,8 @@ def load_dataset_by_name(dataset_name: DatasetName, subset: str = 'test') -> Tex
 
 
 def get_dataset_from_df(df: pd.DataFrame, text_column: str = 'text', label_column: str = 'label') -> TextLabelDataset:
-    texts =df[text_column]
-    labels = df[label_column]
+    texts = df[text_column].tolist()
+    labels = df[label_column].tolist()
 
     text_label_dataset = TextLabelDataset(texts, labels)
     return text_label_dataset

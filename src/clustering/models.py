@@ -104,6 +104,8 @@ class BaseKMeans(ClusteringModel):
         best_labels = max_k_labels['labels']
         best_k = max_k_labels['k']
         best_index = k_labels.index(max_k_labels)
+
+        logger.debug(f"Optimization with {str(k_optimization)} identified optimal k = {best_k}")
         
         return dict(
             labels=best_labels, 

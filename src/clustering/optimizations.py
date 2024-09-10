@@ -9,6 +9,7 @@ class KOptimization:
         return self.__class__.__name__
     
 
-class SilhouetteKOptimization(KOptimization):
+class SilhouetteKOptimization(KOptimization):    
     def score(self, X, labels) -> int:
-        return silhouette_score(X, labels)
+        score = silhouette_score(X, labels)
+        return score

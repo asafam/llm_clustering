@@ -225,30 +225,34 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
         X = np.vstack(all_embeddings)
         labels_true = [tensor.item() for tensor in all_labels]
         
-        # cluster the dataset using the constraint
+        # Cluster the dataset using the constraint
         if cluster_k_information_type == KInformationType.UnknownK:
-            # if number of clusters is unknown then optimize it
-            labels_pred = clustering_model.cluster(X, constraint=constraint, k_optimization=k_optimization, min_k=min_clusters, max_k=max_clusters, random_state=random_state)
+            # If number of clusters is unknown then optimize it
+            cluster_results = clustering_model.cluster(X, constraint=constraint, k_optimization=k_optimization, min_k=min_clusters, max_k=max_clusters, random_state=random_state)
         elif cluster_k_information_type == KInformationType.GroundTruthK:
-            # otherwise, provide the true cluster number to the clustering model
+            # Otherwise, provide the true cluster number to the clustering model
             n_clusters = len(set(labels_true))
-            labels_pred = clustering_model.cluster(X, constraint=constraint, n_clusters=n_clusters, random_state=random_state)
+            cluster_results = clustering_model.cluster(X, constraint=constraint, n_clusters=n_clusters, random_state=random_state)
         elif cluster_k_information_type == KInformationType.OracleK:
-            # or else, provide the predicted cluster number (if we can extract it from the constraint) to the clustering model
+            # Or else, provide the predicted cluster number (if we can extract it from the constraint) to the clustering model
             if constraint.labels is None:
                 logger.error(f"No labels were correctly predicted running with constraint {constraint_type.value}")
             else:
                 labels_oracle_pred = constraint.labels
                 n_clusters = len(set(labels_oracle_pred))
-                labels_pred = clustering_model.cluster(X, constraint=constraint, n_clusters=n_clusters, random_state=random_state)
+                cluster_results = clustering_model.cluster(X, constraint=constraint, n_clusters=n_clusters, random_state=random_state)
+        
+        labels_pred = cluster_results['labels']
 
-        # compute score for the clustering
+        # Compute score for the clustering
         scores = evaluate_clustering(labels_pred=labels_pred, labels_true=labels_true, X=X)
 
         results = dict(
             timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             labels_true=labels_true,
             labels_pred=labels_pred,
+            X=X,
+            cluster_results=cluster_results
         )
         results.update(scores)
 

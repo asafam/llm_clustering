@@ -54,13 +54,15 @@ class BaseKMeans(ClusteringModel):
         # Coarse search over a large range
         logger.debug(f"Optimizing clustering for coarse range of k ({min_k}, {max_k}, {k_optimization_coarse_step_size})")
         coarse_k_values = range(min_k, max_k + 1, k_optimization_coarse_step_size)  # Every 10th value
-        k_labels = []
+        k_labels = [] # Store the iteration results
 
         for k in coarse_k_values:
             k_start_datetime = datetime.now()
             labels = self._cluster(X, n_clusters=k, random_state=random_state, **kwargs)
             score = k_optimization.score(X, labels)
             k_end_datetime = datetime.now()
+            elapsed_seconds=(k_end_datetime - k_start_datetime).total_seconds
+            logger.debug(f"Optimizing clustering for k = {k} returned a score of {score} after {elapsed_seconds} seconds")
             k_labels.append(dict(
                 k=k, 
                 labels=labels,
@@ -69,7 +71,7 @@ class BaseKMeans(ClusteringModel):
                 mode='coarse',
                 start_datetime=k_start_datetime,
                 end_datetime=k_end_datetime,
-                elapsed_seconds=(k_end_datetime - k_start_datetime).total_seconds,
+                elapsed_seconds=elapsed_seconds
             ))
 
         # Find the best k in the coarse search
@@ -80,14 +82,12 @@ class BaseKMeans(ClusteringModel):
             # Fine search around the best coarse k
             logger.debug(f"Optimizing clustering for fine range of k: ({max(min_k, best_k - k_optimization_fine_range + 1)}, {min(max_k, best_k + k_optimization_fine_range)})")
             fine_k_values = range(max(min_k, best_k - k_optimization_fine_range + 1), min(max_k, best_k + k_optimization_fine_range))  # ±k_optimization_fine_range around best coarse k
-            fine_scores = []
-            fine_labels = []
 
             for k in fine_k_values:
                 labels = self._cluster(X, n_clusters=k, random_state=random_state, **kwargs)
                 score = k_optimization.score(X, labels)
-                fine_scores.append(score)
-                fine_labels.append(labels)
+                elapsed_seconds=(k_end_datetime - k_start_datetime).total_seconds
+                logger.debug(f"Optimizing clustering for k = {k} returned a score of {score} after {elapsed_seconds} seconds")
                 k_labels.append(dict(
                     k=k,
                     labels=labels,
@@ -96,7 +96,7 @@ class BaseKMeans(ClusteringModel):
                     mode='fine',
                     start_datetime=k_start_datetime,
                     end_datetime=k_end_datetime,
-                    elapsed_seconds=(k_end_datetime - k_start_datetime).total_seconds,
+                    elapsed_seconds=elapsed_seconds
                 ))
 
         # Find the best k

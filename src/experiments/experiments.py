@@ -96,23 +96,24 @@ class SimpleClusteringExperiment(BaseExperiment):
         # cluster the dataset using the constraint
         if cluster_k_information_type == KInformationType.UnknownK:
             # if number of clusters is unknown then optimize it
-            labels_pred = clustering_model.cluster(X, k_optimization=k_optimization, min_k=min_clusters, max_k=max_clusters, random_state=random_state)
-            n_clusters = len(set(labels_pred))
+            cluster_results = clustering_model.cluster(X, k_optimization=k_optimization, min_k=min_clusters, max_k=max_clusters, random_state=random_state)
         elif cluster_k_information_type == KInformationType.GroundTruthK:
             # otherwise, provide the true cluster number to the clustering model
             n_clusters = len(set(labels_true))
-            labels_pred = clustering_model.cluster(X, n_clusters=n_clusters, random_state=random_state)
+            cluster_results = clustering_model.cluster(X, n_clusters=n_clusters, random_state=random_state)
         else:
             raise ValueError(f"Illegal cluster_k_information_type given in BaseClustering: {cluster_k_information_type.value}")
+        
+        labels_pred = cluster_results['labels']
 
         # compute score for the clustering
         scores = evaluate_clustering(labels_pred=labels_pred, labels_true=labels_true)
 
         results = dict(
-            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             labels_true=labels_true,
             labels_pred=labels_pred,
-            n_clusters=n_clusters
+            X=X,
+            cluster_results=cluster_results
         )
         results.update(scores)
 
@@ -139,6 +140,7 @@ class LLMClusteringExperiment(BaseExperiment):
             llm_max_tokens: int = 8096,
             random_state: int = 42
     ):
+        start_datetime = datetime.now()
         logger = logging.getLogger('default')
 
         # get data
@@ -170,11 +172,17 @@ class LLMClusteringExperiment(BaseExperiment):
         logger.debug(f"Computed scores.")
 
         results = dict(
-            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             labels_true=labels_true,
             labels_pred=labels_pred,
         )
         results.update(scores)
+
+        end_datetime = datetime.now()
+        results.update(dict(
+            start_datetime=start_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+            end_datetime=end_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+            time_in_seconds=(end_datetime - start_datetime).total_seconds()
+        ))
 
         return results
     
@@ -248,7 +256,6 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
         scores = evaluate_clustering(labels_pred=labels_pred, labels_true=labels_true, X=X)
 
         results = dict(
-            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             labels_true=labels_true,
             labels_pred=labels_pred,
             X=X,

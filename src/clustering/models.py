@@ -59,7 +59,7 @@ class BaseKMeans(ClusteringModel):
             end_datetime = datetime.now()
             elapsed_seconds = (end_datetime - start_datetime).total_seconds()
             k_labels.append(dict(
-                k=k, 
+                k=n_clusters, 
                 labels=labels,
                 score=score,
                 k_optimization=str(k_optimization),

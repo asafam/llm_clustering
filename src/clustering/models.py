@@ -61,7 +61,7 @@ class BaseKMeans(ClusteringModel):
             labels = self._cluster(X, n_clusters=k, random_state=random_state, **kwargs)
             score = k_optimization.score(X, labels)
             k_end_datetime = datetime.now()
-            elapsed_seconds=(k_end_datetime - k_start_datetime).total_seconds
+            elapsed_seconds=(k_end_datetime - k_start_datetime).total_seconds()
             logger.debug(f"Optimizing clustering for k = {k} returned a score of {score} after {elapsed_seconds} seconds")
             k_labels.append(dict(
                 k=k, 

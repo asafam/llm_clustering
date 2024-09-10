@@ -240,7 +240,7 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
         elif cluster_k_information_type == KInformationType.GroundTruthK:
             # Otherwise, provide the true cluster number to the clustering model
             n_clusters = len(set(labels_true))
-            cluster_results = clustering_model.cluster(X, constraint=constraint, n_clusters=n_clusters, random_state=random_state)
+            cluster_results = clustering_model.cluster(X, constraint=constraint,  k_optimization=k_optimization, n_clusters=n_clusters, random_state=random_state)
         elif cluster_k_information_type == KInformationType.OracleK:
             # Or else, provide the predicted cluster number (if we can extract it from the constraint) to the clustering model
             if constraint.labels is None:
@@ -248,7 +248,7 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
             else:
                 labels_oracle_pred = constraint.labels
                 n_clusters = len(set(labels_oracle_pred))
-                cluster_results = clustering_model.cluster(X, constraint=constraint, n_clusters=n_clusters, random_state=random_state)
+                cluster_results = clustering_model.cluster(X, constraint=constraint,  k_optimization=k_optimization, n_clusters=n_clusters, random_state=random_state)
         
         labels_pred = cluster_results['labels']
 

@@ -47,11 +47,12 @@ class BaseKMeans(ClusteringModel):
         best_score: float
             The score corresponding to the best k.
         """
-        best_k = min_k
+        k_labels = [] # Store the iteration results
         
         logger = logging.getLogger('default')
 
         if n_clusters:
+            logger.debug(f"Clustering with n_clusters = {n_clusters}")
             start_datetime = datetime.now()
             labels = self._cluster(X, n_clusters=n_clusters, random_state=random_state, **kwargs)
             score = k_optimization.score(X, labels)
@@ -67,6 +68,7 @@ class BaseKMeans(ClusteringModel):
                 end_datetime=end_datetime,
                 elapsed_seconds=elapsed_seconds
             ))
+            logger.debug(f"Clustering for n_clusters = {n_clusters} returned a score of {score} after {elapsed_seconds} seconds")
             return dict(
                 labels=labels, 
                 n_clusters=n_clusters,
@@ -75,8 +77,6 @@ class BaseKMeans(ClusteringModel):
             ) 
         
         # Find the best k in the coarse search
-        k_labels = [] # Store the iteration results
-
         # Coarse search over a large range
         logger.debug(f"Optimizing clustering for coarse range of k ({min_k}, {max_k}, {k_optimization_coarse_step_size})")
         coarse_k_values = range(min_k, max_k + 1, k_optimization_coarse_step_size)  # Every 10th value

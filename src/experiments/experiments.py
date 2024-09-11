@@ -194,16 +194,18 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
             sample_n: int, 
             llm: LLM,
             constraint_type: ConstraintsType,
+            prompt_type: PromptType,
             text_embedding_model: TextEmbeddingModel,
             clustering_model: ClusteringModel,
             llm_k_information_type: KInformationType = KInformationType.UnknownK,
+            cluster_k_information_type: KInformationType = KInformationType.UnknownK,
             k_optimization: Optional[KOptimization] = None,
-            cluster_k_information_type: KInformationType = KInformationType.UnknownK, 
             min_clusters: int = 2,
             max_clusters: int = 10,
             min_cluster_size: int = 0,
             batch_size: int = 128,
-            random_state: int = 42
+            random_state: int = 42,
+            **kwargs
     ):
         start_datetime = datetime.now()
         logger = logging.getLogger('default')
@@ -220,7 +222,7 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
         sample_labels = sample_df['label'].tolist()
         constraint_model = BaseConstrainedLLM(llm=llm, constraint_type=constraint_type)
         k = len(set(sample_labels)) if llm_k_information_type == KInformationType.GroundTruthK else None
-        constraint = constraint_model.create_constraint(texts=sample_texts, k=k)
+        constraint = constraint_model.create_constraint(prompt_type=prompt_type, texts=sample_texts, k=k, **kwargs)
 
         # embed the dataset for clustering
         all_embeddings = []

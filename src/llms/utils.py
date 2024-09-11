@@ -6,8 +6,8 @@ import logging
 
 
 class PromptType(Enum):
-    SimpleClusteringPrompt = 'simple_clustering_prompt1'
-    SimpleClusteringPrompt2 = 'simple_clustering_prompt2'
+    SimpleClusteringPrompt = 'simple_clustering_prompt1_0'
+    SimpleClusteringPrompt2 = 'simple_clustering_prompt1_1'
     HardLabelsClusteringPrompt = 'hard_labels_clustering_prompt'
     FuzzyLabelsClusteringPrompt = 'fuzzy_labels_clustering_prompt'
     MustLinkCannotLinkClusteringPrompt = 'must_link_cannot_link_clustering_prompt'
@@ -28,9 +28,19 @@ def generate_prompt(prompt_type: PromptType, text_index_offset: int = 1, **kwarg
     formatted_texts = "\n".join([f"[ID: {index}] {text}" for index, text in enumerate(texts, start=text_index_offset)])
     prompt = template_prompt.replace("{texts}", formatted_texts) # Replace the {texts} placeholder
 
+    # Format the hint
+    hint = kwargs.get('hint', "their meaning")
+    prompt = prompt.replace("{hint}", hint) # Replace the {hint} placeholder
+
     # Format the k_info 
     k = kwargs.get('k')
     prompt = prompt.replace("{k_info}\n\n", f"Number of clusters: {k}\n\n" if (k is not None and k > 0) else "") # Replace the {k_info} placeholder
+
+    # Format the cot (chain of thought)
+    cot = kwargs.get('cot', False)
+    prompt = prompt.replace("{cot}", "Think step by step." if cot else "") # Replace the {cot} placeholder
+
+
 
     return prompt
 

@@ -1,5 +1,5 @@
 - prompt: |
-    You are a sophisticated language model capable of understanding and processing natural language. Your task is to analyze the relationships between sentences and identify pairs that should be either in the same cluster (must-link) or in different clusters (cannot-link). Follow these instructions carefully:
+    You are a sophisticated language model capable of understanding and processing natural language. Your task is to analyze the relationships between sentences and identify pairs that should be either in the same cluster (must-link) or in different clusters (cannot-link) based on {hint}. Follow these instructions carefully:
 
     1. Input: You will be provided with a list of sentences, each identified by a unique ID.
 
@@ -36,7 +36,7 @@
     ]
     }
 
-    Please cluster the sentence IDs below according to the criteria mentioned above.
+    Please cluster the sentence IDs below according to the criteria mentioned above. {cot}
 
     Sentences for Clustering:
     {texts}

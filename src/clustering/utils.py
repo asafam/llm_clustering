@@ -30,8 +30,8 @@ def visualize_clusters(all_embeddings, kmeans_labels):
 
 def evaluate_clustering(labels_true, labels_pred, X=None):
     logger = logging.getLogger('default')
-    silhouette_avg = silhouette_score(X, labels_true) if X is not None else None
-    davies_bouldin = davies_bouldin_score(X, labels_true) if X is not None else None
+    silhouette_avg = silhouette_score(X, labels_pred) if X is not None else None
+    davies_bouldin = davies_bouldin_score(X, labels_pred) if X is not None else None
     ari = adjusted_rand_score(labels_true, labels_pred)
     nmi = normalized_mutual_info_score(labels_true, labels_pred)
     v_measure = v_measure_score(labels_true, labels_pred)

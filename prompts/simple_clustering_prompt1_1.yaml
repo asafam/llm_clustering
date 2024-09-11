@@ -1,5 +1,5 @@
 - prompt: |
-    You are a sophisticated language model capable of understanding and processing natural language. Your task is to cluster similar sentences together based on their meaning, assigning each sentence to exactly one cluster. Follow these instructions carefully:
+    You are a sophisticated language model capable of understanding and processing natural language. Your task is to cluster similar sentences together based on {hint}, assigning each sentence to exactly one cluster. Follow these instructions carefully:
 
     1. Input: You will be provided with a list of sentences, each identified by a unique ID.
 
@@ -29,7 +29,7 @@
         1: [2, 4, 6]
     }
 
-    Please cluster the sentence IDs below according to the criteria mentioned above.
+    Please cluster the sentence IDs below according to the criteria mentioned above. {cot}
 
     Sentences for Clustering:
     {texts}

@@ -35,8 +35,8 @@ class HardLabelsClusteringContraints(PartitionsLevelClusteringConstraints):
         label_to_index = {label: index for index, label in enumerate(self.labels)} # Create a mapping from label to its index
         self.instances = {id: label_to_index[label] for id, label in instances.items()} # Translate the labels to their indices
 
-    def __str__(self) -> str:
-        return self.instances
+    def __repr__(self) -> str:
+        return str(self.instances)
 
 
 class FuzzyLabelsClusteringContraints(PartitionsLevelClusteringConstraints):

@@ -24,14 +24,19 @@ class HardLabelsClusteringContraints(PartitionsLevelClusteringConstraints):
 
         Examples:
         ---------
-        >>> constraints = SubsetHardLabelsClusteringContraints([(1, 2), (3, 4), (5, 2)])
+        >>> constraints = SubsetHardLabelsClusteringContraints(instances={0: 22, 1: 22, 2: 13, 3: 13, 4: 22})
         >>> constraints.instances
-        [(1, 2), (3, 4), (5, 2)]
+        [{0: 1, 1: 1, 2: 0, 3: 0, 4: 1}]
         
         """
         super().__init__()
-        self.instances = instances
-        self.labels = list(set(instances.values()))
+        
+        self.labels = sorted(set(instances.values())) # Get the unique labels and sort them
+        label_to_index = {label: index for index, label in enumerate(self.labels)} # Create a mapping from label to its index
+        self.instances = {id: label_to_index[label] for id, label in instances.items()} # Translate the labels to their indices
+
+    def __str__(self) -> str:
+        return self.instances
 
 
 class FuzzyLabelsClusteringContraints(PartitionsLevelClusteringConstraints):

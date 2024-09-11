@@ -259,7 +259,8 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
             labels_true=labels_true,
             labels_pred=labels_pred,
             X=X,
-            cluster_results=cluster_results
+            cluster_results=cluster_results,
+            constraint=constraint,
         )
         results.update(scores)
 

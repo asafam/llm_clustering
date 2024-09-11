@@ -13,6 +13,7 @@ import logging
 class DatasetName(Enum):
     CLINC = "CLINC"
     BANKING77 = "BANKING77"
+    TOP = "TOP"
 
 
 class TextLabelDataset(Dataset):
@@ -36,6 +37,8 @@ def load_dataset_by_name(dataset_name: DatasetName, subset: str = 'test') -> Tex
         dataset = load_dataset('clinc_oos', 'small')
     elif dataset_name == DatasetName.BANKING77:
         dataset = load_dataset('banking77')
+    elif dataset_name == DatasetName.TOP:
+        dataset = None
     else:
         raise ValueError(f"No supported dataset {dataset_name}")
     

@@ -1,6 +1,9 @@
 class ClusteringConstraints:
     def __str__(self) -> str:
         return self.__class__.__name__
+    
+    def get_labels(self) -> int:
+        raise NotImplementedError()
 
 
 class PartitionsLevelClusteringConstraints(ClusteringConstraints):
@@ -37,7 +40,10 @@ class HardLabelsClusteringContraints(PartitionsLevelClusteringConstraints):
 
     def __repr__(self) -> str:
         return str(self.instances)
-
+    
+    def get_labels(self) -> int:
+        return self.labels
+    
 
 class FuzzyLabelsClusteringContraints(PartitionsLevelClusteringConstraints):
     def __init__(self, instances: list) -> None:

@@ -236,7 +236,7 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
         # Cluster the dataset using the constraint
         if cluster_k_information_type == KInformationType.UnknownK:
             # If number of clusters is unknown then optimize it
-            max_k = max(max_clusters, len(constraint.labels))
+            max_k = max(max_clusters, len(constraint.get_labels()))
             cluster_results = clustering_model.cluster(X, constraint=constraint, k_optimization=k_optimization, min_k=min_clusters, max_k=max_k, random_state=random_state)
         elif cluster_k_information_type == KInformationType.GroundTruthK:
             # Otherwise, provide the true cluster number to the clustering model

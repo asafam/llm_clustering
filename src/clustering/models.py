@@ -54,7 +54,7 @@ class BaseKMeans(ClusteringModel):
         if n_clusters:
             logger.debug(f"Clustering with n_clusters = {n_clusters}")
             start_datetime = datetime.now()
-            labels = self._cluster(X, n_clusters=n_clusters, random_state=random_state, **kwargs)
+            labels, kmeans = self._cluster(X, n_clusters=n_clusters, random_state=random_state, **kwargs)
             score = k_optimization.score(X, labels)
             end_datetime = datetime.now()
             elapsed_seconds = (end_datetime - start_datetime).total_seconds()
@@ -82,7 +82,7 @@ class BaseKMeans(ClusteringModel):
         coarse_k_values = range(min_k, max_k + 1, k_optimization_coarse_step_size)  # Every 10th value
         for k in coarse_k_values:
             k_start_datetime = datetime.now()
-            labels = self._cluster(X, n_clusters=k, random_state=random_state, **kwargs)
+            labels, kmeans = self._cluster(X, n_clusters=k, random_state=random_state, **kwargs)
             score = k_optimization.score(X, labels)
             k_end_datetime = datetime.now()
             elapsed_seconds=(k_end_datetime - k_start_datetime).total_seconds()
@@ -92,6 +92,7 @@ class BaseKMeans(ClusteringModel):
                 labels=labels,
                 score=score,
                 k_optimization=str(k_optimization),
+                wcss=kmeans.inertia_,
                 mode='coarse',
                 start_datetime=k_start_datetime,
                 end_datetime=k_end_datetime,
@@ -108,7 +109,7 @@ class BaseKMeans(ClusteringModel):
             fine_k_values = range(max(min_k, best_k - k_optimization_fine_range + 1), min(max_k, best_k + k_optimization_fine_range))  # ±k_optimization_fine_range around best coarse k
 
             for k in fine_k_values:
-                labels = self._cluster(X, n_clusters=k, random_state=random_state, **kwargs)
+                labels, kmeans = self._cluster(X, n_clusters=k, random_state=random_state, **kwargs)
                 score = k_optimization.score(X, labels)
                 elapsed_seconds=(k_end_datetime - k_start_datetime).total_seconds()
                 logger.debug(f"Optimizing clustering for k = {k} returned a score of {score} after {elapsed_seconds} seconds")
@@ -117,6 +118,7 @@ class BaseKMeans(ClusteringModel):
                     labels=labels,
                     score=score,
                     k_optimization=str(k_optimization),
+                    wcss=kmeans.inertia_,
                     mode='fine',
                     start_datetime=k_start_datetime,
                     end_datetime=k_end_datetime,
@@ -141,14 +143,14 @@ class BaseKMeans(ClusteringModel):
     def _cluster(self, X, n_clusters: int, random_state: int):
         kmeans = KMeans(n_clusters=n_clusters, random_state=random_state)
         labels = kmeans.fit_predict(X)
-        return labels
+        return labels, kmeans
 
 
 
 class HardLabelsKMeans(BaseKMeans):
     def _cluster(self, X, n_clusters: int, constraint: HardLabelsClusteringContraints, max_iter: int = 300, tol: float = 1e-4, random_state: int = 42):
         hard_labels = constraint.instances
-        labels, _ = self._hard_constrained_kmeans(
+        labels, _, kmeans = self._hard_constrained_kmeans(
             X=X, 
             hard_labels=hard_labels, 
             n_clusters=n_clusters, 
@@ -156,7 +158,7 @@ class HardLabelsKMeans(BaseKMeans):
             tol=tol,
             random_state=random_state
         )
-        return labels
+        return labels, kmeans
 
     def _hard_constrained_kmeans(self, X, hard_labels: dict, n_clusters: int, max_iter: int = 300, tol: float = 1e-4, random_state: int = 42):
         n_samples, n_features = X.shape
@@ -195,4 +197,4 @@ class HardLabelsKMeans(BaseKMeans):
             
             centroids = new_centroids
         
-        return labels, centroids
+        return labels, centroids, kmeans

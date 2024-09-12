@@ -41,17 +41,15 @@ def generate_prompt(prompt_type: PromptType, text_index_offset: int = 1, **kwarg
 
 
 def get_formatter(prompt_type: PromptType) -> Callable:
-    if prompt_type in [PromptType.SimpleClusteringPrompt, PromptType.HardLabelsClusteringPrompt]:
+    if prompt_type in [PromptType.SimpleClusteringPrompt, PromptType.HardLabelsClusteringPrompt, PromptType.HardLabelsClusteringCoTPrompt]:
         return format_response_as_dictionary_of_sentences
     elif prompt_type == PromptType.SimpleClusteringPrompt2:
         return format_response_as_dictionary_of_clusters
-    elif prompt_type in [PromptType.HardLabelsClusteringCotPrompt]:
-        return format_response_as_dictionary_of_sentences
     else:
         raise ValueError(f"No formatter found for {prompt_type}")
 
 
-def format_response_as_dictionary_of_clusters(data:dict, size: int) -> list:
+def format_response_as_dictionary_of_clusters(data: dict, size: int) -> list:
     labels = [-1] * size
     for label, keys in data['result'].items():
         for key in keys:
@@ -61,6 +59,7 @@ def format_response_as_dictionary_of_clusters(data:dict, size: int) -> list:
 
 def format_response_as_dictionary_of_sentences(data:dict, size: int) -> list:
     labels = [-1] * size
+    print("data = ", data)
     for key, label in data['result'].items():
         labels[key - 1] = label
     return labels

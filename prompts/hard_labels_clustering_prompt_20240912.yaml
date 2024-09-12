@@ -6,8 +6,7 @@
     2. Clustering Criteria:
         - Semantic Similarity: Group sentences that convey similar meanings, even if they use different words or structures.
         - Contextual Relevance: Sentences should be in the same cluster if they are relevant to the same topic or idea.
-        - Paraphrasing: Sentences that are paraphrases of each other should be clustered together.
-        - When unsure, prefer assigning sentences to an existing cluster instead of creating a new one, to avoid over-segmentation.
+        - Paraphrasing: Sentences that are paraphrases of each other should be clustered tog    ether.
 
     3. Output:
         - Output your response in a JSON format.

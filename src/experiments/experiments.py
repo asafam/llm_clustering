@@ -162,9 +162,9 @@ class LLMClusteringExperiment(BaseExperiment):
         labels_true = sample_df['label'].tolist()
         k = len(set(labels_true)) if llm_k_information_type == KInformationType.GroundTruthK else None
         prompt = generate_prompt(prompt_type=prompt_type, texts=texts, k=k)
-        result = llm.create_messages(prompt, max_tokens=llm_max_tokens)
+        data = llm.create_messages(prompt, max_tokens=llm_max_tokens)
         formatter_func = get_formatter(prompt_type=prompt_type)
-        labels_pred = formatter_func(data=result, size=len(labels_true))
+        labels_pred = formatter_func(data=data, size=len(labels_true))
         logger.debug(f"LLM generated {len(set(labels_pred))} labels predictions.")
 
         # compute score for the clustering

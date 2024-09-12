@@ -59,7 +59,6 @@ def format_response_as_dictionary_of_clusters(data: dict, size: int) -> list:
 
 def format_response_as_dictionary_of_sentences(data:dict, size: int) -> list:
     labels = [-1] * size
-    print("data = ", data)
     for key, label in data['result'].items():
         labels[key - 1] = label
     return labels

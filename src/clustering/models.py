@@ -145,7 +145,7 @@ class BaseKMeans(ClusteringModel):
         )
     
     def _cluster(self, X, n_clusters: int, k_optimization: KOptimization, random_state: int):
-        kmeans = KMeans(n_clusters=n_clusters, k_optimization=k_optimization, random_state=random_state)
+        kmeans = KMeans(n_clusters=n_clusters, random_state=random_state)
         labels = kmeans.fit_predict(X)
         score = k_optimization.score(X, labels)
         return labels, kmeans, score

@@ -302,7 +302,8 @@ class MustLinkCannotLinkKMeans(BaseKMeans):
 
         # After training, apply the learned projection matrix P
         X_projected = X @ P.T
-        return super.cluster(
+
+        return super().cluster(
             X=X_projected,
             constraint=constraint,
             k_optimization=k_optimization, 

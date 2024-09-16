@@ -250,7 +250,7 @@ class HardLabelsKMeans(BaseKMeans):
     
 
 class MustLinkCannotLinkKMeans(BaseKMeans):
-    def _cluster(self, X, n_clusters: int, constraint: HardLabelsClusteringContraints, max_iter: int = 300, tol: float = 1e-4, random_state: int = 42):
+    def _cluster(self, X, n_clusters: int, constraint: MustLinkCannotLinkInstanceLevelClusteringConstraints, random_state: int = 42):
         must_link = constraint.must_link
         cannot_link = constraint.cannot_link
         labels, _, kmeans = self._must_link_cannot_link(
@@ -263,11 +263,13 @@ class MustLinkCannotLinkKMeans(BaseKMeans):
         return labels, kmeans
     
     def _must_link_cannot_link(self, X, must_link: list, cannot_link: list, n_clusters: int, random_state: int = 42):
+        # Wrap the embeddings in a torch tensor
+        X = torch.from_numpy(X.astype(np.float32))
         # Initialize projection matrix P (embedding_dim x embedding_dim)
         embedding_dim = X.shape[1]
-        P = torch.eye(embedding_dim, requires_grad=True)
+        P = torch.eye(embedding_dim, requires_grad=True) # d x d
 
-        # Define a margin for must-not-link constraints
+        # Define a margin for cannot-link constraints
         margin = 1.0
 
         # Define contrastive loss with projection matrix P
@@ -275,9 +277,9 @@ class MustLinkCannotLinkKMeans(BaseKMeans):
             loss = 0.0
             for i, j in must_link_pairs:
                 # Must-link: minimize the distance
-                loss += torch.norm(P @ (embeddings[i] - embeddings[j]))**2
+                loss += torch.norm(P @ (embeddings[i] - embeddings[j]))**2 # (d, d) x (1, d)
             for i, j in cannot_link_pairs:
-                # Must-not-link: enforce margin between embeddings
+                # Cannot-link: enforce margin between embeddings
                 dist = torch.norm(P @ (embeddings[i] - embeddings[j]))
                 loss += torch.clamp(margin - dist, min=0)**2
             return loss

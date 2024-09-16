@@ -2,7 +2,7 @@ class ClusteringConstraints:
     def __str__(self) -> str:
         return self.__class__.__name__
     
-    def get_labels(self) -> int:
+    def get_labels(self) -> list:
         raise NotImplementedError()
 
 
@@ -41,7 +41,7 @@ class HardLabelsClusteringContraints(PartitionsLevelClusteringConstraints):
     def __repr__(self) -> str:
         return str(self.instances)
     
-    def get_labels(self) -> int:
+    def get_labels(self) -> list:
         return self.labels
     
 
@@ -129,3 +129,6 @@ class MustLinkCannotLinkInstanceLevelClusteringConstraints(PairwiseInstanceLevel
         super().__init__()
         self.must_link = must_link
         self.cannot_link = cannot_link
+
+    def get_labels(self) -> list:
+        return []

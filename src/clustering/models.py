@@ -316,29 +316,3 @@ class MustLinkCannotLinkKMeans(BaseKMeans):
             **kwargs
         )
 
-    def _cluster(self, X, n_clusters: int, constraint: MustLinkCannotLinkInstanceLevelClusteringConstraints, k_optimization: KOptimization, random_state: int = 42):
-        must_link = constraint.must_link
-        cannot_link = constraint.cannot_link
-        labels, _, kmeans, score = self._must_link_cannot_link(
-            X=X, 
-            must_link=must_link,
-            cannot_link=cannot_link,
-            k_optimization=k_optimization,
-            n_clusters=n_clusters, 
-            random_state=random_state
-        )
-        return labels, kmeans, score
-    
-    def _must_link_cannot_link(self, X, must_link: list, cannot_link: list, k_optimization: KOptimization, n_clusters: int, random_state: int = 42):
-        
-
-        # Use the projected embeddings for K-means clustering
-        kmeans = KMeans(n_clusters=n_clusters, init='k-means++', random_state=random_state)
-        labels = kmeans.fit_predict(X_projected.detach().numpy())
-        centroids = kmeans.cluster_centers_
-
-        # Evaluate clustering quality using silhouette score
-        score = k_optimization.score(X_projected.detach().numpy(), labels)
-
-        return labels, centroids, kmeans, score
-

@@ -61,8 +61,7 @@ class BaseKMeans(ClusteringModel):
         if n_clusters:
             logger.debug(f"Clustering with n_clusters = {n_clusters}")
             start_datetime = datetime.now()
-            labels, kmeans = self._cluster(X, n_clusters=n_clusters, random_state=random_state, **kwargs)
-            score = k_optimization.score(X, labels)
+            labels, kmeans, score = self._cluster(X, n_clusters=n_clusters, k_optimization=k_optimization, random_state=random_state, **kwargs)
             end_datetime = datetime.now()
             elapsed_seconds = (end_datetime - start_datetime).total_seconds()
             k_labels.append(dict(
@@ -89,8 +88,7 @@ class BaseKMeans(ClusteringModel):
         coarse_k_values = range(min_k, max_k + 1, k_optimization_coarse_step_size)  # Every 10th value
         for k in coarse_k_values:
             k_start_datetime = datetime.now()
-            labels, kmeans = self._cluster(X, n_clusters=k, random_state=random_state, **kwargs)
-            score = k_optimization.score(X, labels)
+            labels, kmeans, score = self._cluster(X, n_clusters=k, k_optimization=k_optimization, random_state=random_state, **kwargs)
             k_end_datetime = datetime.now()
             elapsed_seconds=(k_end_datetime - k_start_datetime).total_seconds()
             logger.debug(f"Optimizing clustering for k = {k} returned a score of {score} after {elapsed_seconds} seconds")
@@ -116,8 +114,7 @@ class BaseKMeans(ClusteringModel):
             fine_k_values = range(max(min_k, best_k - k_optimization_fine_range + 1), min(max_k, best_k + k_optimization_fine_range))  # ±k_optimization_fine_range around best coarse k
 
             for k in fine_k_values:
-                labels, kmeans = self._cluster(X, n_clusters=k, random_state=random_state, **kwargs)
-                score = k_optimization.score(X, labels)
+                labels, kmeans, score = self._cluster(X, n_clusters=k, random_state=random_state, k_optimization=k_optimization, **kwargs)
                 elapsed_seconds=(k_end_datetime - k_start_datetime).total_seconds()
                 logger.debug(f"Optimizing clustering for k = {k} returned a score of {score} after {elapsed_seconds} seconds")
                 k_labels.append(dict(
@@ -147,27 +144,29 @@ class BaseKMeans(ClusteringModel):
             k_labels=k_labels
         )
     
-    def _cluster(self, X, n_clusters: int, random_state: int):
-        kmeans = KMeans(n_clusters=n_clusters, random_state=random_state)
+    def _cluster(self, X, n_clusters: int, k_optimization: KOptimization, random_state: int):
+        kmeans = KMeans(n_clusters=n_clusters, k_optimization=k_optimization, random_state=random_state)
         labels = kmeans.fit_predict(X)
-        return labels, kmeans
+        score = k_optimization.score(X, labels)
+        return labels, kmeans, score
 
 
 
 class HardLabelsKMeans(BaseKMeans):
-    def _cluster(self, X, n_clusters: int, constraint: HardLabelsClusteringContraints, max_iter: int = 300, tol: float = 1e-4, random_state: int = 42):
+    def _cluster(self, X, n_clusters: int, constraint: HardLabelsClusteringContraints, k_optimization: KOptimization, max_iter: int = 300, tol: float = 1e-4, random_state: int = 42):
         hard_labels = constraint.instances
-        labels, _, kmeans = self._hard_constrained_kmeans(
-            X=X, 
+        labels, _, kmeans, score = self._hard_constrained_kmeans(
+            X=X,
             hard_labels=hard_labels, 
             n_clusters=n_clusters, 
+            k_optimization=k_optimization,
             max_iter=max_iter, 
             tol=tol,
             random_state=random_state
         )
-        return labels, kmeans
+        return labels, kmeans, score
 
-    def _hard_constrained_kmeans(self, X, hard_labels: dict, n_clusters: int, max_iter: int = 300, tol: float = 1e-4, random_state: int = 42):
+    def _hard_constrained_kmeans(self, X, hard_labels: dict, n_clusters: int, k_optimization: KOptimization, max_iter: int = 300, tol: float = 1e-4, random_state: int = 42):
         n_samples, n_features = X.shape
         
         # Initialize centroids using k-means++ or random initialization
@@ -203,8 +202,10 @@ class HardLabelsKMeans(BaseKMeans):
                 break
             
             centroids = new_centroids
+
+            score = k_optimization.score(X, labels)
         
-        return labels, centroids, kmeans
+        return labels, centroids, kmeans, score
 
     def _hard_constrained_kmeans2(self, X, hard_labels: dict, n_clusters: int, max_iter: int = 300, tol: float = 1e-4, random_state: int = 42):
         n_samples, n_features = X.shape
@@ -253,16 +254,17 @@ class MustLinkCannotLinkKMeans(BaseKMeans):
     def _cluster(self, X, n_clusters: int, constraint: MustLinkCannotLinkInstanceLevelClusteringConstraints, random_state: int = 42):
         must_link = constraint.must_link
         cannot_link = constraint.cannot_link
-        labels, _, kmeans = self._must_link_cannot_link(
+        labels, _, kmeans, score = self._must_link_cannot_link(
             X=X, 
             must_link=must_link,
             cannot_link=cannot_link,
+            k_optimization=k_optimization,
             n_clusters=n_clusters, 
             random_state=random_state
         )
-        return labels, kmeans
+        return labels, kmeans, score
     
-    def _must_link_cannot_link(self, X, must_link: list, cannot_link: list, n_clusters: int, random_state: int = 42):
+    def _must_link_cannot_link(self, X, must_link: list, cannot_link: list, k_optimization: KOptimization, n_clusters: int, random_state: int = 42):
         # Wrap the embeddings in a torch tensor
         X = torch.from_numpy(X.astype(np.float32))
         # Initialize projection matrix P (embedding_dim x embedding_dim)
@@ -307,8 +309,7 @@ class MustLinkCannotLinkKMeans(BaseKMeans):
         centroids = kmeans.cluster_centers_
 
         # Evaluate clustering quality using silhouette score
-        silhouette_avg = silhouette_score(X_projected.detach().numpy(), labels)
-        print(f'Silhouette Score: {silhouette_avg}')
+        score = k_optimization.score(X_projected.detach().numpy(), labels)
 
-        return labels, centroids, kmeans
+        return labels, centroids, kmeans, score
 

@@ -251,20 +251,21 @@ class HardLabelsKMeans(BaseKMeans):
     
 
 class MustLinkCannotLinkKMeans(BaseKMeans):
-    def _cluster(self, X, n_clusters: int, constraint: MustLinkCannotLinkInstanceLevelClusteringConstraints, k_optimization: KOptimization, random_state: int = 42):
-        must_link = constraint.must_link
-        cannot_link = constraint.cannot_link
-        labels, _, kmeans, score = self._must_link_cannot_link(
-            X=X, 
-            must_link=must_link,
-            cannot_link=cannot_link,
-            k_optimization=k_optimization,
-            n_clusters=n_clusters, 
-            random_state=random_state
-        )
-        return labels, kmeans, score
-    
-    def _must_link_cannot_link(self, X, must_link: list, cannot_link: list, k_optimization: KOptimization, n_clusters: int, random_state: int = 42):
+    def cluster(
+            self, 
+            X,
+            constraint: MustLinkCannotLinkInstanceLevelClusteringConstraints,
+            k_optimization: KOptimization, 
+            n_clusters: Optional[int] = None,
+            min_k: int = 2,
+            max_k: int = 10, 
+            k_optimization_coarse_step_size: int = 10,
+            k_optimization_fine_range: int = 10,
+            random_state: int = 42,
+            **kwargs
+        ):
+        logger = logging.getLogger('default')
+
         # Wrap the embeddings in a torch tensor
         X = torch.from_numpy(X.astype(np.float32))
         # Initialize projection matrix P (embedding_dim x embedding_dim)
@@ -290,18 +291,45 @@ class MustLinkCannotLinkKMeans(BaseKMeans):
         optimizer = optim.Adam([P], lr=0.01)
 
         # Training loop to optimize the projection matrix P
-        n_epochs = 100
+        n_epochs = 200
         for epoch in range(n_epochs):
             optimizer.zero_grad()
-            loss = contrastive_loss(P, X, must_link, cannot_link, margin)
+            loss = contrastive_loss(P, X, constraint.must_link, constraint.cannot_link, margin)
             loss.backward()
             optimizer.step()
-
-            if epoch % 10 == 0:  # Print loss every 10 epochs
-                print(f'Epoch {epoch + 1}, Loss: {loss.item()}')
+        
+        logger.debug(f'Projection matrix P loss: {loss.item()}')
 
         # After training, apply the learned projection matrix P
         X_projected = X @ P.T
+        return super.cluster(
+            X=X_projected,
+            constraint=constraint,
+            k_optimization=k_optimization, 
+            n_clusters=n_clusters,
+            min_k=min_k,
+            max_k=max_k, 
+            k_optimization_coarse_step_size=k_optimization_coarse_step_size,
+            k_optimization_fine_range=k_optimization_fine_range,
+            random_state=random_state,
+            **kwargs
+        )
+
+    def _cluster(self, X, n_clusters: int, constraint: MustLinkCannotLinkInstanceLevelClusteringConstraints, k_optimization: KOptimization, random_state: int = 42):
+        must_link = constraint.must_link
+        cannot_link = constraint.cannot_link
+        labels, _, kmeans, score = self._must_link_cannot_link(
+            X=X, 
+            must_link=must_link,
+            cannot_link=cannot_link,
+            k_optimization=k_optimization,
+            n_clusters=n_clusters, 
+            random_state=random_state
+        )
+        return labels, kmeans, score
+    
+    def _must_link_cannot_link(self, X, must_link: list, cannot_link: list, k_optimization: KOptimization, n_clusters: int, random_state: int = 42):
+        
 
         # Use the projected embeddings for K-means clustering
         kmeans = KMeans(n_clusters=n_clusters, init='k-means++', random_state=random_state)

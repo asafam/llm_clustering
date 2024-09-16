@@ -305,7 +305,6 @@ class MustLinkCannotLinkKMeans(BaseKMeans):
 
         return super().cluster(
             X=X_projected,
-            constraint=constraint,
             k_optimization=k_optimization, 
             n_clusters=n_clusters,
             min_k=min_k,

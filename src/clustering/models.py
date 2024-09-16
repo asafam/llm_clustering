@@ -249,7 +249,7 @@ class HardLabelsKMeans(BaseKMeans):
         return labels, centroids, kmeans
     
 
-class MustLinkMustNotLinkKMeans(BaseKMeans):
+class MustLinkCannotLinkKMeans(BaseKMeans):
     def _cluster(self, X, n_clusters: int, constraint: HardLabelsClusteringContraints, max_iter: int = 300, tol: float = 1e-4, random_state: int = 42):
         must_link = constraint.must_link
         cannot_link = constraint.cannot_link

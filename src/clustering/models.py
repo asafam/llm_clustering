@@ -207,7 +207,7 @@ class HardLabelsKMeans(BaseKMeans):
         
         return labels, centroids, kmeans, score
 
-    def _hard_constrained_kmeans2(self, X, hard_labels: dict, n_clusters: int, max_iter: int = 300, tol: float = 1e-4, random_state: int = 42):
+    def _hard_constrained_kmeans2(self, X, hard_labels: dict, k_optimization: KOptimization, n_clusters: int, max_iter: int = 300, tol: float = 1e-4, random_state: int = 42):
         n_samples, n_features = X.shape
 
         init_clusters = []
@@ -251,7 +251,7 @@ class HardLabelsKMeans(BaseKMeans):
     
 
 class MustLinkCannotLinkKMeans(BaseKMeans):
-    def _cluster(self, X, n_clusters: int, constraint: MustLinkCannotLinkInstanceLevelClusteringConstraints, random_state: int = 42):
+    def _cluster(self, X, n_clusters: int, constraint: MustLinkCannotLinkInstanceLevelClusteringConstraints, k_optimization: KOptimization, random_state: int = 42):
         must_link = constraint.must_link
         cannot_link = constraint.cannot_link
         labels, _, kmeans, score = self._must_link_cannot_link(

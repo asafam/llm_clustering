@@ -7,6 +7,13 @@ from clustering.optimizations import KOptimization
 import logging
 
 
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+
+
 class ClusteringModel:
     def cluster(self, **kwargs):
         raise NotImplementedError()
@@ -198,3 +205,96 @@ class HardLabelsKMeans(BaseKMeans):
             centroids = new_centroids
         
         return labels, centroids, kmeans
+
+    def _hard_constrained_kmeans2(self, X, hard_labels: dict, n_clusters: int, max_iter: int = 300, tol: float = 1e-4, random_state: int = 42):
+        n_samples, n_features = X.shape
+
+        init_clusters = []
+
+        
+        # Initialize centroids using k-means++ or random initialization
+        kmeans = KMeans(n_clusters=n_clusters, init=init_clusters, random_state=random_state)
+        kmeans.fit(X)
+        centroids = kmeans.cluster_centers_
+        
+        # Force initial assignment based on hard constraints
+        labels = np.full(n_samples, -1, dtype=int)
+
+        # Assign hard constraint labels
+        labels[list(hard_labels.keys())] = list(hard_labels.values())
+        
+        for i in range(max_iter):
+            # Assignment step
+            for j in range(n_samples):
+                if j not in hard_labels: # Only assign points without hard labels
+                    distances = np.linalg.norm(X[j] - centroids, axis=1)
+                    labels[j] = np.argmin(distances)
+            
+            # Update step
+            new_centroids = np.zeros_like(centroids)
+            for k in range(n_clusters):
+                cluster_points = X[labels == k]
+                if cluster_points.shape[0] > 0:
+                    new_centroids[k] = np.mean(cluster_points, axis=0)
+                else:
+                    # Handle empty clusters by reinitializing centroids
+                    new_centroids[k] = X[np.random.choice(n_samples)]
+            
+            # Check for convergence
+            if np.all(np.abs(new_centroids - centroids) < tol):
+                break
+            
+            centroids = new_centroids
+        
+        return labels, centroids, kmeans
+    
+
+class MustLinkMustNotLinkKMeans(BaseKMeans):
+    def _must_link_must_no_link(self, X, must_link: list, must_not_link: list, n_clusters: int, random_state: int = 42):
+        # Initialize projection matrix P (embedding_dim x embedding_dim)
+        embedding_dim = X.shape[1]
+        P = torch.eye(embedding_dim, requires_grad=True)
+
+        # Define a margin for must-not-link constraints
+        margin = 1.0
+
+        # Define contrastive loss with projection matrix P
+        def contrastive_loss(P, embeddings, must_link_pairs, must_not_link_pairs, margin):
+            loss = 0.0
+            for i, j in must_link_pairs:
+                # Must-link: minimize the distance
+                loss += torch.norm(P @ (embeddings[i] - embeddings[j]))**2
+            for i, j in must_not_link_pairs:
+                # Must-not-link: enforce margin between embeddings
+                dist = torch.norm(P @ (embeddings[i] - embeddings[j]))
+                loss += torch.clamp(margin - dist, min=0)**2
+            return loss
+
+        # Set up optimizer to optimize P
+        optimizer = optim.Adam([P], lr=0.01)
+
+        # Training loop to optimize the projection matrix P
+        n_epochs = 100
+        for epoch in range(n_epochs):
+            optimizer.zero_grad()
+            loss = contrastive_loss(P, X, must_link, must_not_link, margin)
+            loss.backward()
+            optimizer.step()
+
+            if epoch % 10 == 0:  # Print loss every 10 epochs
+                print(f'Epoch {epoch + 1}, Loss: {loss.item()}')
+
+        # After training, apply the learned projection matrix P
+        X_projected = X @ P.T
+
+        # Use the projected embeddings for K-means clustering
+        kmeans = KMeans(n_clusters=n_clusters, init='k-means++', random_state=random_state)
+        labels = kmeans.fit_predict(X_projected.detach().numpy())
+        centroids = kmeans.cluster_centers_
+
+        # Evaluate clustering quality using silhouette score
+        silhouette_avg = silhouette_score(X_projected.detach().numpy(), labels)
+        print(f'Silhouette Score: {silhouette_avg}')
+
+        return labels, centroids, kmeans
+

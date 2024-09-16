@@ -250,7 +250,19 @@ class HardLabelsKMeans(BaseKMeans):
     
 
 class MustLinkMustNotLinkKMeans(BaseKMeans):
-    def _must_link_must_no_link(self, X, must_link: list, must_not_link: list, n_clusters: int, random_state: int = 42):
+    def _cluster(self, X, n_clusters: int, constraint: HardLabelsClusteringContraints, max_iter: int = 300, tol: float = 1e-4, random_state: int = 42):
+        must_link = constraint.must_link
+        cannot_link = constraint.cannot_link
+        labels, _, kmeans = self._must_link_cannot_link(
+            X=X, 
+            must_link=must_link,
+            cannot_link=cannot_link,
+            n_clusters=n_clusters, 
+            random_state=random_state
+        )
+        return labels, kmeans
+    
+    def _must_link_cannot_link(self, X, must_link: list, cannot_link: list, n_clusters: int, random_state: int = 42):
         # Initialize projection matrix P (embedding_dim x embedding_dim)
         embedding_dim = X.shape[1]
         P = torch.eye(embedding_dim, requires_grad=True)
@@ -259,12 +271,12 @@ class MustLinkMustNotLinkKMeans(BaseKMeans):
         margin = 1.0
 
         # Define contrastive loss with projection matrix P
-        def contrastive_loss(P, embeddings, must_link_pairs, must_not_link_pairs, margin):
+        def contrastive_loss(P, embeddings, must_link_pairs, cannot_link_pairs, margin):
             loss = 0.0
             for i, j in must_link_pairs:
                 # Must-link: minimize the distance
                 loss += torch.norm(P @ (embeddings[i] - embeddings[j]))**2
-            for i, j in must_not_link_pairs:
+            for i, j in cannot_link_pairs:
                 # Must-not-link: enforce margin between embeddings
                 dist = torch.norm(P @ (embeddings[i] - embeddings[j]))
                 loss += torch.clamp(margin - dist, min=0)**2
@@ -277,7 +289,7 @@ class MustLinkMustNotLinkKMeans(BaseKMeans):
         n_epochs = 100
         for epoch in range(n_epochs):
             optimizer.zero_grad()
-            loss = contrastive_loss(P, X, must_link, must_not_link, margin)
+            loss = contrastive_loss(P, X, must_link, cannot_link, margin)
             loss.backward()
             optimizer.step()
 

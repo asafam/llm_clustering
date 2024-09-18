@@ -18,7 +18,6 @@ class KInformationType(Enum):
 def generate_constraint(data: any, constraint_type: ConstraintsType, **kwargs):
     if constraint_type == ConstraintsType.HardLabelsConstraints:
         instances = data.get('result')
-        labels_pred = formatter_func(data=data, size=len(labels_true))
         return HardLabelsClusteringContraints(instances=instances)
     elif constraint_type == ConstraintsType.FuzzyLabelsConstraints:
         instances = data.get('result')

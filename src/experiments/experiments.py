@@ -165,6 +165,7 @@ class LLMClusteringExperiment(BaseExperiment):
         data = llm.create_messages(prompt, max_tokens=llm_max_tokens)
         formatter_func = get_formatter(prompt_type=prompt_type)
         labels_pred = formatter_func(data=data, size=len(labels_true))
+        raise ValueError("Fix code here formatter does not return what is expected")
         logger.debug(f"LLM generated {len(set(labels_pred))} labels predictions.")
 
         # compute score for the clustering

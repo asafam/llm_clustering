@@ -45,7 +45,7 @@ def get_formatter(prompt_type: PromptType) -> Callable:
     if prompt_type in [PromptType.SimpleClusteringPrompt, PromptType.HardLabelsClusteringPrompt, PromptType.HardLabelsClusteringCoTPrompt]:
         return format_response_as_dictionary_of_sentences
     elif prompt_type in [PromptType.MustLinkCannotLinkClusteringPrompt]:
-        return 
+        return format_response_as_must_link_cannot_link
     elif prompt_type == PromptType.SimpleClusteringPrompt2:
         return format_response_as_dictionary_of_clusters
     else:
@@ -61,13 +61,18 @@ def format_response_as_dictionary_of_clusters(data: dict, size: int, text_index_
 
 
 def format_response_as_dictionary_of_sentences(data: dict, size: int, text_index_offset: int = OFFSET) -> list:
-    labels = [-1] * size
-    for key, label in data['result'].items():
-        labels[key - text_index_offset] = label
-    return labels
+    # labels = [-1] * size
+    # for key, label in data['result'].items():
+    #     labels[key - text_index_offset] = label
+    # return labels
+    result = {}
+    for key, value in data['result'].items():
+        result[key - text_index_offset] = value
+    data['result'] = result
+    return data
 
 
 def format_response_as_must_link_cannot_link(data: dict, text_index_offset: int = OFFSET) -> list:
-    data['must_link'] = [(a - text_index_offset, b - text_index_offset) for (a, b) in data['must_link']]
+    must_link = [(a - text_index_offset, b - text_index_offset) for (a, b) in data['must_link']]
     data['cannot_link'] = [(a - text_index_offset, b - text_index_offset) for (a, b) in data['cannot_link']]
     return data

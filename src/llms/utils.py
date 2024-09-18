@@ -5,7 +5,7 @@ import yaml
 import logging
 
 
-OFFSET = 0
+OFFSET = 1
 
 class PromptType(Enum):
     SimpleClusteringPrompt = 'simple_clustering_prompt1_0'

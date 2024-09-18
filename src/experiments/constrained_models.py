@@ -21,8 +21,12 @@ class BaseConstrainedLLM:
         data = self.llm.create_messages(prompt=prompt)
 
         # process results and generate constraints
-        constraint = generate_constraint(data, self.constraint_type)
-        return constraint
+        constraint = generate_constraint(data=data, constraint_type=self.constraint_type, **kwargs)
+        result = dict(
+            constraint=constraint,
+            prompt=prompt
+        )
+        return result
 
         
 

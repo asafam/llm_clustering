@@ -1,3 +1,5 @@
+from sklearn.metrics import precision_score, recall_score, accuracy_score
+
 class ClusteringConstraints:
     def __str__(self) -> str:
         return self.__class__.__name__
@@ -118,7 +120,8 @@ class MustLinkCannotLinkInstanceLevelClusteringConstraints(PairwiseInstanceLevel
         ---------
         >>> constraints = MustLinkCannotLinkInstanceLevelClusteringConstraints(
         ...     must_link=[(1, 2), (3, 4)], 
-        ...     cannot_link=[(1, 3), (2, 5)]
+        ...     cannot_link=[(1, 3), (2, 5)],
+        ...     labels_true=[0, 0, 1, 1, 2]
         ... )
         >>> constraints.must_link
         [(1, 2), (3, 4)]
@@ -132,3 +135,44 @@ class MustLinkCannotLinkInstanceLevelClusteringConstraints(PairwiseInstanceLevel
 
     def get_labels(self) -> list:
         return []
+    
+    def evaluate(self, true_labels: list):
+        # Create ground truth pairs based on the true labels
+        true_must_link = []
+        true_cannot_link = []
+
+        # Compare all pairs and decide if they should be must-link or cannot-link based on true labels
+        for i in range(len(true_labels)):
+            for j in range(i + 1, len(true_labels)):
+                if true_labels[i] == true_labels[j]:
+                    true_must_link.append((i, j))
+                else:
+                    true_cannot_link.append((i, j))
+
+        # Convert must-link and cannot-link predictions to binary labels for evaluation
+        # We will check if the predicted pairs match the true must-link or cannot-link pairs
+        y_true = []
+        y_pred = []
+
+        # Evaluate must-link predictions
+        for i, j in self.must_link:
+            y_true.append(1 if (i, j) in true_must_link else 0)
+            y_pred.append(1)
+
+        # Evaluate cannot-link predictions
+        for i, j in self.cannot_link:
+            y_true.append(0 if (i, j) in true_cannot_link else 1)
+            y_pred.append(0)
+
+        # Compute precision, recall, and accuracy
+        precision = precision_score(y_true, y_pred)
+        recall = recall_score(y_true, y_pred)
+        accuracy = accuracy_score(y_true, y_pred)
+        
+        return dict(
+            precision = precision,
+            recall = recall,
+            accuracy = accuracy
+        )
+
+    

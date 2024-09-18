@@ -14,7 +14,7 @@ class KInformationType(Enum):
     UnknownK='UnknownK'
 
 
-def generate_constraint(data: any, constraint_type: ConstraintsType):
+def generate_constraint(data: any, constraint_type: ConstraintsType, **kwargs):
     if constraint_type == ConstraintsType.HardLabelsConstraints:
         instances = data.get('result')
         return HardLabelsClusteringContraints(instances=instances)
@@ -26,5 +26,5 @@ def generate_constraint(data: any, constraint_type: ConstraintsType):
         cannot_link = data.get('cannot_link', [])
         if not must_link and not cannot_link:
             raise ValueError("Must link and cannot link constraints are both empty")
-        return MustLinkCannotLinkInstanceLevelClusteringConstraints(must_link=must_link, cannot_link=cannot_link)
+        return MustLinkCannotLinkInstanceLevelClusteringConstraints(must_link=must_link, cannot_link=cannot_link, **kwargs)
 

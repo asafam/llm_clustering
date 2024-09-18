@@ -1,4 +1,5 @@
 from sklearn.metrics import precision_score, recall_score, accuracy_score
+import logging
 
 class ClusteringConstraints:
     def __str__(self) -> str:
@@ -137,6 +138,7 @@ class MustLinkCannotLinkInstanceLevelClusteringConstraints(PairwiseInstanceLevel
         return []
     
     def evaluate(self, true_labels: list):
+        logger = logging.getLogger('default')
         # Create ground truth pairs based on the true labels
         true_must_link = []
         true_cannot_link = []
@@ -169,10 +171,11 @@ class MustLinkCannotLinkInstanceLevelClusteringConstraints(PairwiseInstanceLevel
         recall = recall_score(y_true, y_pred)
         accuracy = accuracy_score(y_true, y_pred)
         
-        return dict(
+        result = dict(
             precision = precision,
             recall = recall,
             accuracy = accuracy
         )
+        logger.debug(f"MustLinkCannotLinkInstanceLevelClusteringConstraints evaluation returned {result}")
 
     

@@ -42,6 +42,7 @@ class MustLinkCannotLinkKMeans(BaseKMeans):
     def _train(self, X, num_epochs = 100, lr=1e-3):
         logger = logging.getLogger('default')
         # Projection matrix P to be learned (D x D)
+        X = torch.from_numpy(X).float()
         embedding_dim = X.shape[1]
         P = torch.randn(embedding_dim, embedding_dim, requires_grad=True)
         
@@ -49,6 +50,7 @@ class MustLinkCannotLinkKMeans(BaseKMeans):
         optimizer = optim.Adam([P], lr=lr) # Optimizer
 
         # Training loop       
+        
         for epoch in range(num_epochs):
             optimizer.zero_grad()
 

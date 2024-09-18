@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 from data import DatasetName, TextLabelDataset, load_dataset_by_name, sample_dataset, get_dataset_from_df
 from clustering.constraints_manager import ConstraintsType, KInformationType
-from clustering.models import ClusteringModel
+from clustering.models.base_models import ClusteringModel
 from clustering.optimizations import KOptimization
 from clustering.utils import evaluate_clustering
 from embedding.models import TextEmbeddingModel

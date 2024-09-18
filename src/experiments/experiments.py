@@ -223,8 +223,7 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
         constraint_model = BaseConstrainedLLM(llm=llm, constraint_type=constraint_type)
         k = len(set(sample_labels)) if llm_k_information_type == KInformationType.GroundTruthK else None
         constraint_result = constraint_model.create_constraint(prompt_type=prompt_type, texts=sample_texts, k=k, **kwargs)
-        constraint = constraint_result.get('result')
-        constraint_quality = constraint.evaluate(true_labels=sample_labels)
+        constraint = constraint_result.get('constraint')
 
         # embed the dataset for clustering
         all_embeddings = []
@@ -264,11 +263,8 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
             labels_true=labels_true,
             labels_pred=labels_pred,
             X=X,
-            cluster_results=cluster_results,
-            constraint=constraint,
-            constraint_quality=constraint_quality,
-            prompt=constraint_result.get('prompt')
         )
+        results.update(constraint_result)
         results.update(scores)
 
         end_datetime = datetime.now()

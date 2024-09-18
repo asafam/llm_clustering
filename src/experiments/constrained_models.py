@@ -12,7 +12,7 @@ class BaseConstrainedLLM:
         self.constraint_type = constraint_type
     
 
-    def create_constraint(self, prompt_type: Optional[PromptType] = None, **kwargs):
+    def create_constraint(self, labels_true: list, prompt_type: Optional[PromptType] = None, **kwargs):
         # generate the prompt
         prompt_type = prompt_type or get_prompt_type(constraint_type=self.constraint_type)
         prompt = generate_prompt(prompt_type=prompt_type, **kwargs)
@@ -22,9 +22,11 @@ class BaseConstrainedLLM:
 
         # process results and generate constraints
         constraint = generate_constraint(data=data, constraint_type=self.constraint_type, **kwargs)
+        constraint_quality = constraint.evaluate(true_labels=labels_true)
         result = dict(
             constraint=constraint,
-            prompt=prompt
+            prompt=prompt,
+            constraint_quality = constraint_quality
         )
         return result
 

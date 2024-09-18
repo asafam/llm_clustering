@@ -1,6 +1,6 @@
 from typing import *
 from llms.models import *
-from llms.utils import generate_prompt, PromptType
+from llms.utils import *
 from experiments.utils import get_prompt_type
 from clustering.constraints import *
 from clustering.constraints_manager import ConstraintsType, generate_constraint
@@ -19,6 +19,9 @@ class BaseConstrainedLLM:
 
         # execute prompt (possibly n times)
         data = self.llm.create_messages(prompt=prompt)
+
+        formatter = get_formatter(prompt_type=prompt_type)
+        data = formatter()
 
         # process results and generate constraints
         constraint = generate_constraint(data=data, constraint_type=self.constraint_type, **kwargs)

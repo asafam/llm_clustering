@@ -5,6 +5,8 @@ import yaml
 import logging
 
 
+OFFSET = 0
+
 class PromptType(Enum):
     SimpleClusteringPrompt = 'simple_clustering_prompt1_0'
     SimpleClusteringPrompt2 = 'simple_clustering_prompt1_1'
@@ -14,7 +16,7 @@ class PromptType(Enum):
     MustLinkCannotLinkClusteringPrompt = 'must_link_cannot_link_clustering_prompt'
 
 
-def generate_prompt(prompt_type: PromptType, text_index_offset: int = 1, **kwargs):
+def generate_prompt(prompt_type: PromptType, text_index_offset: int = OFFSET, **kwargs):
     logger = logging.getLogger('default')
     # Load the YAML file
     prompt_file = os.path.join(os.getenv('LLM_CLUSTERING_BASE_DIR', ''), 'prompts', f'{prompt_type.value}.yaml')
@@ -25,7 +27,6 @@ def generate_prompt(prompt_type: PromptType, text_index_offset: int = 1, **kwarg
 
     # Format the texts as [ID: {index}] {text}
     texts = kwargs.get('texts')
-    text_index_offset = kwargs.get('text_index_offset', 1)
     formatted_texts = "\n".join([f"[ID: {index}] {text}" for index, text in enumerate(texts, start=text_index_offset)])
     prompt = template_prompt.replace("{texts}", formatted_texts) # Replace the {texts} placeholder
 
@@ -43,22 +44,30 @@ def generate_prompt(prompt_type: PromptType, text_index_offset: int = 1, **kwarg
 def get_formatter(prompt_type: PromptType) -> Callable:
     if prompt_type in [PromptType.SimpleClusteringPrompt, PromptType.HardLabelsClusteringPrompt, PromptType.HardLabelsClusteringCoTPrompt]:
         return format_response_as_dictionary_of_sentences
+    elif prompt_type in [PromptType.MustLinkCannotLinkClusteringPrompt]:
+        return 
     elif prompt_type == PromptType.SimpleClusteringPrompt2:
         return format_response_as_dictionary_of_clusters
     else:
         raise ValueError(f"No formatter found for {prompt_type}")
 
 
-def format_response_as_dictionary_of_clusters(data: dict, size: int) -> list:
+def format_response_as_dictionary_of_clusters(data: dict, size: int, text_index_offset: int = OFFSET) -> list:
     labels = [-1] * size
     for label, keys in data['result'].items():
         for key in keys:
-            labels[key - 1] = label
+            labels[key - text_index_offset] = label
     return labels
 
 
-def format_response_as_dictionary_of_sentences(data:dict, size: int) -> list:
+def format_response_as_dictionary_of_sentences(data: dict, size: int, text_index_offset: int = OFFSET) -> list:
     labels = [-1] * size
     for key, label in data['result'].items():
-        labels[key - 1] = label
+        labels[key - text_index_offset] = label
     return labels
+
+
+def format_response_as_must_link_cannot_link(data: dict, text_index_offset: int = OFFSET) -> list:
+    data['must_link'] = [(a - text_index_offset, b - text_index_offset) for (a, b) in data['must_link']]
+    data['cannot_link'] = [(a - text_index_offset, b - text_index_offset) for (a, b) in data['cannot_link']]
+    return data

@@ -5,7 +5,7 @@ from clustering.optimizations import KOptimization
 import logging
 import torch
 from torch import optim, nn
-from base_models import BaseKMeans
+from clustering.models.base_models import BaseKMeans
 
 
 class MustLinkCannotLinkKMeans(BaseKMeans):

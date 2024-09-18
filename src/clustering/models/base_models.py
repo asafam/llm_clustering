@@ -11,7 +11,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
 
 
 class ClusteringModel:

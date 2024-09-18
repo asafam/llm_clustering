@@ -4,7 +4,7 @@ from datetime import datetime
 from sklearn.cluster import KMeans
 from clustering.constraints import *
 from clustering.optimizations import KOptimization
-from base_models import BaseKMeans
+from clustering.models.base_models import BaseKMeans
 
 
 class HardLabelsKMeans(BaseKMeans):

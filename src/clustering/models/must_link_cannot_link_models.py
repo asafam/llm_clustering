@@ -28,7 +28,7 @@ class MustLinkCannotLinkKMeans(BaseKMeans):
         X_projected = np.dot(X, P.detach().cpu().numpy())
 
         return super().cluster(
-            X=X_projected.detach().numpy(),
+            X=X_projected,
             k_optimization=k_optimization, 
             n_clusters=n_clusters,
             min_k=min_k,

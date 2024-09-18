@@ -9,6 +9,10 @@ from clustering.models.base_models import BaseKMeans
 
 
 class MustLinkCannotLinkKMeans(BaseKMeans):
+    def __init__(self) -> None:
+        super().__init__()
+        self.must_link = constraint.must_linkself.cannot
+
     def cluster(
             self, 
             X,
@@ -22,7 +26,7 @@ class MustLinkCannotLinkKMeans(BaseKMeans):
             random_state: int = 42,
             **kwargs
         ):
-        P = self._train(X)
+        P = self._train(X, must_link=constraint.must_link, cannot_link=constraint.cannot_link)
 
         # After training, apply the learned projection matrix P
         X_projected = np.dot(X, P.detach().cpu().numpy())
@@ -39,7 +43,7 @@ class MustLinkCannotLinkKMeans(BaseKMeans):
             **kwargs
         )
     
-    def _train(self, X, num_epochs = 100, lr=1e-3):
+    def _train(self, X, must_link, cannot_link, num_epochs = 100, lr=1e-3):
         logger = logging.getLogger('default')
         # Projection matrix P to be learned (D x D)
         X = torch.from_numpy(X).float()
@@ -58,12 +62,12 @@ class MustLinkCannotLinkKMeans(BaseKMeans):
             X_projected = torch.matmul(X, P)
 
             # Compute distances for must-link and cannot-link pairs
-            must_link_distances = torch.stack([torch.norm(X_projected[i] - X_projected[j]) for i, j in self.must_link])
-            cannot_link_distances = torch.stack([torch.norm(X_projected[i] - X_projected[j]) for i, j in self.cannot_link])
+            must_link_distances = torch.stack([torch.norm(X_projected[i] - X_projected[j]) for i, j in must_link])
+            cannot_link_distances = torch.stack([torch.norm(X_projected[i] - X_projected[j]) for i, j in cannot_link])
 
             # Labels: 0 for must-link (should be closer), 1 for cannot-link (should be farther)
-            must_link_labels = torch.zeros(len(self.must_link))
-            cannot_link_labels = torch.ones(len(self.cannot_link))
+            must_link_labels = torch.zeros(len(must_link))
+            cannot_link_labels = torch.ones(len(cannot_link))
 
             # Combine distances and labels
             distances = torch.cat([must_link_distances, cannot_link_distances])

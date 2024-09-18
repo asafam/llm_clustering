@@ -222,7 +222,7 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
         sample_labels = sample_df['label'].tolist()
         constraint_model = BaseConstrainedLLM(llm=llm, constraint_type=constraint_type)
         k = len(set(sample_labels)) if llm_k_information_type == KInformationType.GroundTruthK else None
-        constraint_result = constraint_model.create_constraint(prompt_type=prompt_type, texts=sample_texts, k=k, **kwargs)
+        constraint_result = constraint_model.create_constraint(prompt_type=prompt_type, texts=sample_texts, labels=sample_labels, k=k, **kwargs)
         constraint = constraint_result.get('constraint')
 
         # embed the dataset for clustering

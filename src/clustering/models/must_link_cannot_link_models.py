@@ -9,10 +9,6 @@ from clustering.models.base_models import BaseKMeans
 
 
 class MustLinkCannotLinkKMeans(BaseKMeans):
-    def __init__(self) -> None:
-        super().__init__()
-        self.must_link = constraint.must_linkself.cannot
-
     def cluster(
             self, 
             X,

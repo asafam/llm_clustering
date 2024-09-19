@@ -12,8 +12,10 @@ import logging
 
 class DatasetName(Enum):
     CLINC = "CLINC"
+    CLINC_TOY = "CLINC_TOY"
     BANKING77 = "BANKING77"
-    TOP = "TOP"
+    TOPV2 = "TOPV2"
+    AGNEWS = "AGNEWS"
 
 
 class TextLabelDataset(Dataset):
@@ -37,8 +39,11 @@ def load_dataset_by_name(dataset_name: DatasetName, subset: str = 'test') -> Tex
         dataset = load_dataset('clinc_oos', 'small')
     elif dataset_name == DatasetName.BANKING77:
         dataset = load_dataset('banking77')
-    elif dataset_name == DatasetName.TOP:
-        dataset = None
+    elif dataset_name == DatasetName.AGNEWS:
+        dataset = load_dataset('fancyzhx/ag_news')
+    elif dataset_name == DatasetName.TOPV2:
+        dataset = load_dataset('WillHeld/top_v2')
+
     else:
         raise ValueError(f"No supported dataset {dataset_name}")
     
@@ -70,11 +75,11 @@ def get_text_column(dataset_name: DatasetName):
 
 
 def get_label_column(dataset_name: DatasetName):
-    label_column = None
+    label_column = 'label'
     if dataset_name == dataset_name.CLINC:
         label_column = 'intent'
-    elif dataset_name == dataset_name.BANKING77:
-        label_column = 'label'
+    elif dataset_name == dataset_name.TOPV2:
+        label_column = 'domain'
     return label_column
 
 

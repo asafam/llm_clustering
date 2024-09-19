@@ -7,6 +7,7 @@ class ConstraintsType(Enum):
     HardLabelsConstraints='HardLabelsConstraints',
     FuzzyLabelsConstraints='FuzzyLabelsConstraints',
     MustLinkCannotLinkConstraints='MustLinkCannotLinkConstraints',
+    KConstraint='KConstraint',
 
 
 class KInformationType(Enum):
@@ -28,4 +29,7 @@ def generate_constraint(data: any, constraint_type: ConstraintsType, **kwargs):
         if not must_link and not cannot_link:
             raise ValueError("Must link and cannot link constraints are both empty")
         return MustLinkCannotLinkInstanceLevelClusteringConstraints(must_link=must_link, cannot_link=cannot_link)
+    elif constraint_type == ConstraintsType.KConstraint:
+        k = data.get('result')
+        return 
 

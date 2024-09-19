@@ -286,7 +286,7 @@ class LLMConstraintedClusteringQualityExperiment(BaseExperiment):
             llm: LLM,
             constraint_type: ConstraintsType,
             prompt_type: PromptType,
-            n_clusters: int = 0,
+            k: int = 0,
             min_cluster_size: int = 0,
             random_state: int = 42,
             **kwargs
@@ -298,18 +298,18 @@ class LLMConstraintedClusteringQualityExperiment(BaseExperiment):
         dataset = load_dataset_by_name(dataset_name=dataset_name)
 
         # sample subset
-        sample_df = sample_dataset(dataset=dataset, n=sample_n, k=n_clusters, min_cluster_size=min_cluster_size, random_state=random_state)
+        sample_df = sample_dataset(dataset=dataset, n=sample_n, k=k, min_cluster_size=min_cluster_size, random_state=random_state)
 
         # run the LLM predictions to create the constraints
         sample_texts = sample_df['text'].tolist()
         sample_labels = sample_df['label'].tolist()
         constraint_model = BaseConstrainedLLM(llm=llm, constraint_type=constraint_type)
-        constraint_result = constraint_model.create_constraint(prompt_type=prompt_type, texts=sample_texts, labels=sample_labels, k=k, **kwargs)
+        constraint_result = constraint_model.create_constraint(prompt_type=prompt_type, texts=sample_texts, labels=sample_labels, **kwargs)
         constraint = constraint_result.get('constraint')
 
         results = dict(
             k_true=len(set(sample_labels)),
-            k_pred=len(set(constraint.instances.values())),
+            k_pred=constraint.get_k(),
         )
         results.update(constraint_result)
 

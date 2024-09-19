@@ -47,6 +47,9 @@ class HardLabelsClusteringContraints(PartitionsLevelClusteringConstraints):
     def get_labels(self) -> list:
         return self.labels
     
+    def get_k(self) -> int:
+        return len(self.labels)
+    
 
 class FuzzyLabelsClusteringContraints(PartitionsLevelClusteringConstraints):
     def __init__(self, instances: list) -> None:
@@ -178,4 +181,19 @@ class MustLinkCannotLinkInstanceLevelClusteringConstraints(PairwiseInstanceLevel
         )
         logger.debug(f"MustLinkCannotLinkInstanceLevelClusteringConstraints evaluation returned {result}")
 
+
+class KClusteringContraints(ClusteringConstraints):
+    def __init__(self, k: list) -> None:
+        super().__init__()
+        self.k = k
+
+    def __repr__(self) -> str:
+        return str(self.k)
     
+    def get_labels(self) -> list:
+        return None
+    
+    def get_k(self) -> int:
+        return self.k
+    
+

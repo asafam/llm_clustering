@@ -59,3 +59,5 @@ def get_prompt_type(constraint_type: ConstraintsType) -> PromptType:
         return PromptType.FuzzyLabelsClusteringPrompt
     elif constraint_type == ConstraintsType.MustLinkCannotLinkConstraints:
         return PromptType.MustLinkCannotLinkClusteringPrompt
+    elif constraint_type == ConstraintsType.KConstraint:
+        return PromptType.KPredictClusteringPrompt

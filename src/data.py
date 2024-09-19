@@ -83,7 +83,7 @@ def get_label_column(dataset_name: DatasetName):
 def sample_dataset(
     dataset: TextLabelDataset,
     n: int = 0, 
-    k: Optional[int] = None, 
+    k: Optional[int|float] = None, 
     min_cluster_size: int = 1, 
     random_state: int = 42
 ) -> pd.DataFrame:
@@ -103,6 +103,9 @@ def sample_dataset(
 
     # sample labels
     unique_labels = df['label'].unique()
+
+    if 0 < k < 1:
+        k = math.ceil(k * len(unique_labels))
 
     if k is None:
         selected_labels = []

@@ -14,6 +14,7 @@ class PromptType(Enum):
     HardLabelsClusteringCoTPrompt = 'hard_labels_clustering_prompt_cot'
     FuzzyLabelsClusteringPrompt = 'fuzzy_labels_clustering_prompt'
     MustLinkCannotLinkClusteringPrompt = 'must_link_cannot_link_clustering_prompt'
+    KPredictClusteringPrompt = 'k_predict_clustering_prompt'
 
 
 def generate_prompt(prompt_type: PromptType, text_index_offset: int = OFFSET, **kwargs):

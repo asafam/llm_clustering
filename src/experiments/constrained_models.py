@@ -18,10 +18,10 @@ class BaseConstrainedLLM:
         prompt = generate_prompt(prompt_type=prompt_type, **kwargs)
 
         # execute prompt (possibly n times)
-        response = self.llm.create_messages(prompt=prompt)
+        data = self.llm.create_messages(prompt=prompt)
 
         formatter = get_formatter(prompt_type=prompt_type)
-        data = formatter(response)
+        data = formatter(data)
 
         # process results and generate constraints
         constraint = generate_constraint(data=data, constraint_type=self.constraint_type, **kwargs)

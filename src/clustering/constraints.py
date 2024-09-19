@@ -50,6 +50,9 @@ class HardLabelsClusteringContraints(PartitionsLevelClusteringConstraints):
     def get_k(self) -> int:
         return len(self.labels)
     
+    def evaluate(self, true_labels: list) -> dict:
+        return dict()
+    
 
 class FuzzyLabelsClusteringContraints(PartitionsLevelClusteringConstraints):
     def __init__(self, instances: list) -> None:
@@ -140,7 +143,7 @@ class MustLinkCannotLinkInstanceLevelClusteringConstraints(PairwiseInstanceLevel
     def get_labels(self) -> list:
         return []
     
-    def evaluate(self, true_labels: list):
+    def evaluate(self, true_labels: list) -> dict:
         logger = logging.getLogger('default')
         # Create ground truth pairs based on the true labels
         true_must_link = []
@@ -195,5 +198,16 @@ class KClusteringContraints(ClusteringConstraints):
     
     def get_k(self) -> int:
         return self.k
+    
+    def evaluate(self, true_labels: list) -> dict:
+        predicted_k = self.k
+        true_k = len(set(true_labels))
+
+        return dict(
+            absolute_difference = abs(predicted_k - true_k),
+            relative_error = abs(predicted_k - true_k) / true_k * 100,
+            normalized_absolute_error = abs(predicted_k - true_k) / true_k,
+            squared_error = (predicted_k - true_k) ** 2,
+        )
     
 

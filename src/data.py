@@ -3,7 +3,6 @@ from datasets import load_dataset
 import pandas as pd
 import numpy as np
 import random
-import torch
 from torch.utils.data import DataLoader, Dataset
 from enum import Enum
 import math
@@ -66,11 +65,9 @@ def get_dataset_from_df(df: pd.DataFrame, text_column: str = 'text', label_colum
 
 
 def get_text_column(dataset_name: DatasetName):
-    label_column = None
-    if dataset_name == dataset_name.CLINC:
-        label_column = 'text'
-    elif dataset_name == dataset_name.BANKING77:
-        label_column = 'text'
+    label_column = 'text'
+    if dataset_name == dataset_name.TOPV2:
+        label_column = 'utterance'
     return label_column
 
 

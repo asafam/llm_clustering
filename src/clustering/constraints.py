@@ -32,7 +32,7 @@ class HardLabelsClusteringContraints(PartitionsLevelClusteringConstraints):
         ---------
         >>> constraints = SubsetHardLabelsClusteringContraints(instances={0: 22, 1: 22, 2: 13, 3: 13, 4: 22})
         >>> constraints.instances
-        [{0: 1, 1: 1, 2: 0, 3: 0, 4: 1}]
+        {0: 1, 1: 1, 2: 0, 3: 0, 4: 1}
         
         """
         super().__init__()

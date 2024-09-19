@@ -276,3 +276,48 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
         ))
 
         return results
+
+
+class LLMConstraintedClusteringQualityExperiment(BaseExperiment):
+    def run(
+            self,
+            dataset_name: DatasetName,
+            sample_n: int, 
+            llm: LLM,
+            constraint_type: ConstraintsType,
+            prompt_type: PromptType,
+            n_clusters: int = 0,
+            min_cluster_size: int = 0,
+            random_state: int = 42,
+            **kwargs
+    ):
+        start_datetime = datetime.now()
+        logger = logging.getLogger('default')
+
+        # get data
+        dataset = load_dataset_by_name(dataset_name=dataset_name)
+
+        # sample subset
+        sample_df = sample_dataset(dataset=dataset, n=sample_n, k=n_clusters, min_cluster_size=min_cluster_size, random_state=random_state)
+
+        # run the LLM predictions to create the constraints
+        sample_texts = sample_df['text'].tolist()
+        sample_labels = sample_df['label'].tolist()
+        constraint_model = BaseConstrainedLLM(llm=llm, constraint_type=constraint_type)
+        constraint_result = constraint_model.create_constraint(prompt_type=prompt_type, texts=sample_texts, labels=sample_labels, k=k, **kwargs)
+        constraint = constraint_result.get('constraint')
+
+        results = dict(
+            k_true=len(set(sample_labels)),
+            k_pred=len(set(constraint.instances.values())),
+        )
+        results.update(constraint_result)
+
+        end_datetime = datetime.now()
+        results.update(dict(
+            start_datetime=start_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+            end_datetime=end_datetime.strftime("%Y-%m-%d %H:%M:%S"),
+            time_in_seconds=(end_datetime - start_datetime).total_seconds()
+        ))
+
+        return results

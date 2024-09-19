@@ -76,12 +76,11 @@ def format_response_as_dictionary_of_sentences(data: dict, text_index_offset: in
 
 
 def format_response_as_must_link_cannot_link(data: dict, text_index_offset: int = OFFSET) -> list:
-    must_link = [(a - text_index_offset, b - text_index_offset) for (a, b) in data['must_link']]
-    cannot_link = [(a - text_index_offset, b - text_index_offset) for (a, b) in data['cannot_link']]
-    return dict(
-        must_link=must_link,
-        cannot_link=cannot_link
-    )
+    data['result']['must_link'] = [(a - text_index_offset, b - text_index_offset) for (a, b) in data['result']['must_link']]
+    data['result']['cannot_link'] = [(a - text_index_offset, b - text_index_offset) for (a, b) in data['result']['cannot_link']]
+    return data
 
 def format_response_as_value_of_k(data: dict):
-    return int(data['result'])
+    return dict(
+        result = int(data['result'])
+    )

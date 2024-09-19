@@ -26,7 +26,7 @@ class BaseConstrainedLLM:
 
         # process results and generate constraints
         constraint = generate_constraint(data=data, constraint_type=self.constraint_type, **kwargs)
-        constraint_quality = constraint.evaluate(true_labels=labels) if labels else {}
+        constraint_quality = constraint.evaluate(labels_true=labels) if labels else {}
         logger.debug(f"Constraint evaluation returned {constraint_quality}")
         result = dict(
             constraint=constraint,

@@ -1,5 +1,4 @@
-from sklearn.metrics import precision_score, recall_score, accuracy_score
-import logging
+from sklearn.metrics import precision_score, recall_score, accuracy_score, adjusted_rand_score, normalized_mutual_info_score, v_measure_score
 
 class ClusteringConstraints:
     def __str__(self) -> str:
@@ -50,8 +49,15 @@ class HardLabelsClusteringContraints(PartitionsLevelClusteringConstraints):
     def get_k(self) -> int:
         return len(self.labels)
     
-    def evaluate(self, true_labels: list) -> dict:
-        return dict()
+    def evaluate(self, labels_true: list) -> dict:
+        labels_pred = [-1] * len(labels_true)
+        for id, label in self.instances.items():
+            labels_pred[id] = label
+        return dict(
+            ari = adjusted_rand_score(labels_true, labels_pred),
+            nmi = normalized_mutual_info_score(labels_true, labels_pred),
+            v_measure = v_measure_score(labels_true, labels_pred),
+        )
     
 
 class FuzzyLabelsClusteringContraints(PartitionsLevelClusteringConstraints):
@@ -143,16 +149,15 @@ class MustLinkCannotLinkInstanceLevelClusteringConstraints(PairwiseInstanceLevel
     def get_labels(self) -> list:
         return []
     
-    def evaluate(self, true_labels: list) -> dict:
-        logger = logging.getLogger('default')
+    def evaluate(self, labels_true: list) -> dict:
         # Create ground truth pairs based on the true labels
         true_must_link = []
         true_cannot_link = []
 
         # Compare all pairs and decide if they should be must-link or cannot-link based on true labels
-        for i in range(len(true_labels)):
-            for j in range(i + 1, len(true_labels)):
-                if true_labels[i] == true_labels[j]:
+        for i in range(len(labels_true)):
+            for j in range(i + 1, len(labels_true)):
+                if labels_true[i] == labels_true[j]:
                     true_must_link.append((i, j))
                 else:
                     true_cannot_link.append((i, j))
@@ -199,9 +204,9 @@ class KClusteringContraints(ClusteringConstraints):
     def get_k(self) -> int:
         return self.k
     
-    def evaluate(self, true_labels: list) -> dict:
+    def evaluate(self, labels_true: list) -> dict:
         predicted_k = self.k
-        true_k = len(set(true_labels))
+        true_k = len(set(labels_true))
 
         return dict(
             absolute_difference = abs(predicted_k - true_k),

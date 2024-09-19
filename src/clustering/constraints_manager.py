@@ -32,4 +32,6 @@ def generate_constraint(data: any, constraint_type: ConstraintsType, **kwargs):
     elif constraint_type == ConstraintsType.KConstraint:
         k = data.get('result')
         return KClusteringContraints(k=k)
+    else:
+        raise ValueError(f'No constraint matching the passed type {constraint_type}')
 

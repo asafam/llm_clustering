@@ -49,6 +49,8 @@ def get_formatter(prompt_type: PromptType) -> Callable:
         return format_response_as_must_link_cannot_link
     elif prompt_type == PromptType.SimpleClusteringPrompt2:
         return format_response_as_dictionary_of_clusters
+    elif prompt_type == PromptType.KPredictClusteringPrompt:
+        return format_response_as_value_of_k
     else:
         raise ValueError(f"No formatter found for {prompt_type}")
 
@@ -61,7 +63,7 @@ def format_response_as_dictionary_of_clusters(data: dict, size: int, text_index_
     return labels
 
 
-def format_response_as_dictionary_of_sentences(data: dict, size: int, text_index_offset: int = OFFSET) -> list:
+def format_response_as_dictionary_of_sentences(data: dict, text_index_offset: int = OFFSET) -> list:
     # labels = [-1] * size
     # for key, label in data['result'].items():
     #     labels[key - text_index_offset] = label
@@ -75,5 +77,11 @@ def format_response_as_dictionary_of_sentences(data: dict, size: int, text_index
 
 def format_response_as_must_link_cannot_link(data: dict, text_index_offset: int = OFFSET) -> list:
     must_link = [(a - text_index_offset, b - text_index_offset) for (a, b) in data['must_link']]
-    data['cannot_link'] = [(a - text_index_offset, b - text_index_offset) for (a, b) in data['cannot_link']]
-    return data
+    cannot_link = [(a - text_index_offset, b - text_index_offset) for (a, b) in data['cannot_link']]
+    return dict(
+        must_link=must_link,
+        cannot_link=cannot_link
+    )
+
+def format_response_as_value_of_k(data: dict):
+    return int(data['result'])

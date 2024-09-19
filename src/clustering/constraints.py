@@ -182,7 +182,7 @@ class MustLinkCannotLinkInstanceLevelClusteringConstraints(PairwiseInstanceLevel
             recall = recall,
             accuracy = accuracy
         )
-        logger.debug(f"MustLinkCannotLinkInstanceLevelClusteringConstraints evaluation returned {result}")
+        return result
 
 
 class KClusteringContraints(ClusteringConstraints):

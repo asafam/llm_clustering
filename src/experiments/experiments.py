@@ -285,7 +285,7 @@ class LLMConstraintedClusteringQualityExperiment(BaseExperiment):
             sample_n: int, 
             llm: LLM,
             constraint_type: ConstraintsType,
-            prompt_type: PromptType,
+            prompt_type: Optional[PromptType] = None,
             k: int = 0,
             min_cluster_size: int = 0,
             random_state: int = 42,

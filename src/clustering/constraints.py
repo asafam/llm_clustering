@@ -191,7 +191,7 @@ class MustLinkCannotLinkInstanceLevelClusteringConstraints(PairwiseInstanceLevel
 
 
 class KClusteringContraints(ClusteringConstraints):
-    def __init__(self, k: list) -> None:
+    def __init__(self, k: int) -> None:
         super().__init__()
         self.k = k
 

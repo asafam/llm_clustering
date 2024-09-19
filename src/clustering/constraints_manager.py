@@ -31,5 +31,5 @@ def generate_constraint(data: any, constraint_type: ConstraintsType, **kwargs):
         return MustLinkCannotLinkInstanceLevelClusteringConstraints(must_link=must_link, cannot_link=cannot_link)
     elif constraint_type == ConstraintsType.KConstraint:
         k = data.get('result')
-        return k
+        return KClusteringContraints(k=k)
 

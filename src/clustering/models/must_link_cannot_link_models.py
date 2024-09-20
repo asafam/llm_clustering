@@ -19,7 +19,7 @@ class MustLinkCannotLinkKMeans(BaseKMeans):
             max_k: int = 10, 
             k_optimization_coarse_step_size: int = 10,
             k_optimization_fine_range: int = 10,
-            num_epochs: int = 100,
+            num_epochs: int = 200,
             random_state: int = 42,
             **kwargs
         ):
@@ -40,7 +40,7 @@ class MustLinkCannotLinkKMeans(BaseKMeans):
             **kwargs
         )
     
-    def _train(self, X, must_link, cannot_link, num_epochs = 100, lr=1e-3):
+    def _train(self, X, must_link, cannot_link, num_epochs = 200, lr=1e-3):
         logger = logging.getLogger('default')
         # Projection matrix P to be learned (D x D)
         X = torch.from_numpy(X).float()

@@ -19,10 +19,11 @@ class MustLinkCannotLinkKMeans(BaseKMeans):
             max_k: int = 10, 
             k_optimization_coarse_step_size: int = 10,
             k_optimization_fine_range: int = 10,
+            num_epochs: int = 100,
             random_state: int = 42,
             **kwargs
         ):
-        P = self._train(X, must_link=constraint.must_link, cannot_link=constraint.cannot_link)
+        P = self._train(X, must_link=constraint.must_link, cannot_link=constraint.cannot_link, num_epochs=num_epochs)
 
         # After training, apply the learned projection matrix P
         X_projected = np.dot(X, P.detach().cpu().numpy())

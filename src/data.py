@@ -104,11 +104,10 @@ def sample_dataset(
     # sample labels
     unique_labels = df['label'].unique()
 
-    if 0 < k < 1:
-        k = math.ceil(k * len(unique_labels))
-
     if k is None:
         selected_labels = []
+    elif 0 < k < 1:
+        selected_labels = random.sample(list(unique_labels), math.ceil(k * len(unique_labels)))
     elif k > 0:
         selected_labels = random.sample(list(unique_labels), k)
     elif k == 0:

@@ -6,6 +6,7 @@ import random
 from torch.utils.data import DataLoader, Dataset
 from enum import Enum
 import math
+from sklearn.preprocessing import LabelEncoder
 import logging
 
 
@@ -51,6 +52,10 @@ def load_dataset_by_name(dataset_name: DatasetName, subset: str = 'test') -> Tex
 
     texts = dataset[subset][text_column]
     labels = dataset[subset][label_column]
+
+    if type(labels[0] == str):
+        label_encoder = LabelEncoder()
+        labels = label_encoder.fit_transform(labels)
 
     text_label_dataset = TextLabelDataset(texts, labels)
     return text_label_dataset

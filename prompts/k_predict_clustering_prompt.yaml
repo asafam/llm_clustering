@@ -11,7 +11,8 @@
 
     3. Output:
         - Output your response in a JSON format.
-        - Return the number of clusters
+        - Return only the number of clusters.
+        - Do not return anything else.
 
     Example:
 

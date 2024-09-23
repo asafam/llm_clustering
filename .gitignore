@@ -163,3 +163,4 @@ cython_debug/
 
 # OSx
 .DS_Store
+/tmp/*

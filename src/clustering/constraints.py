@@ -1,4 +1,5 @@
 from sklearn.metrics import precision_score, recall_score, accuracy_score, adjusted_rand_score, normalized_mutual_info_score, v_measure_score
+import logging
 
 class ClusteringConstraints:
     def __str__(self) -> str:
@@ -50,9 +51,13 @@ class HardLabelsClusteringContraints(PartitionsLevelClusteringConstraints):
         return len(self.labels)
     
     def evaluate(self, labels_true: list) -> dict:
+        logger = logging.getLogger('default')
         labels_pred = [-1] * len(labels_true)
         for id, label in self.instances.items():
-            labels_pred[id] = label
+            if id >= len(labels_pred):
+                logger.error(f"ID {id} with predicted label {label} is out-of-range")
+            else:
+                labels_pred[id] = label
         return dict(
             ari = adjusted_rand_score(labels_true, labels_pred),
             nmi = normalized_mutual_info_score(labels_true, labels_pred),

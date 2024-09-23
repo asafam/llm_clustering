@@ -83,6 +83,7 @@ class SimpleClusteringExperiment(BaseExperiment):
         sampled_dataset = get_dataset_from_df(sample_df)
 
         # embed the dataset for clustering
+        all_ids = []
         all_embeddings = []
         all_labels = []
         dataloader = DataLoader(sampled_dataset, batch_size=batch_size, shuffle=False)
@@ -90,6 +91,7 @@ class SimpleClusteringExperiment(BaseExperiment):
             batch_embeddings = text_embedding_model.embed(batch_texts)
             all_embeddings.append(batch_embeddings)
             all_labels.extend(batch_labels)
+            all_ids.extend(batch_ids)
         X = np.vstack(all_embeddings)
         labels_true = [tensor.item() for tensor in all_labels]
 
@@ -228,13 +230,15 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
         constraint = constraint_result.get('constraint')
 
         # embed the dataset for clustering
+        all_ids = []
         all_embeddings = []
         all_labels = []
         dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
-        for batch_texts, batch_labels in dataloader:
+        for batch_ids, batch_texts, batch_labels in dataloader:
             batch_embeddings = text_embedding_model.embed(batch_texts)
             all_embeddings.append(batch_embeddings)
             all_labels.extend(batch_labels)
+            all_ids.extend(batch_ids)
         X = np.vstack(all_embeddings)
         labels_true = [tensor.item() for tensor in all_labels]
         

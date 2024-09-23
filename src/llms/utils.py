@@ -5,8 +5,6 @@ import yaml
 import logging
 
 
-OFFSET = 1
-
 class PromptType(Enum):
     SimpleClusteringPrompt = 'simple_clustering_prompt1_0'
     SimpleClusteringPrompt2 = 'simple_clustering_prompt1_1'
@@ -17,7 +15,7 @@ class PromptType(Enum):
     KPredictClusteringPrompt = 'k_predict_clustering_prompt'
 
 
-def generate_prompt(prompt_type: PromptType, text_index_offset: int = OFFSET, **kwargs):
+def generate_prompt(prompt_type: PromptType, **kwargs):
     logger = logging.getLogger('default')
     # Load the YAML file
     prompt_file = os.path.join(os.getenv('LLM_CLUSTERING_BASE_DIR', ''), 'prompts', f'{prompt_type.value}.yaml')
@@ -27,8 +25,9 @@ def generate_prompt(prompt_type: PromptType, text_index_offset: int = OFFSET, **
         template_prompt = data[0]['prompt']
 
     # Format the texts as [ID: {index}] {text}
+    ids = kwargs.get('ids')
     texts = kwargs.get('texts')
-    formatted_texts = "\n".join([f"[ID: {index}] {text}" for index, text in enumerate(texts, start=text_index_offset)])
+    formatted_texts = "\n".join([f"[ID: {id}] {text}" for id, text in zip(ids, texts)])
     prompt = template_prompt.replace("{texts}", formatted_texts) # Replace the {texts} placeholder
 
     # Format the hint
@@ -45,39 +44,31 @@ def generate_prompt(prompt_type: PromptType, text_index_offset: int = OFFSET, **
 def get_formatter(prompt_type: PromptType) -> Callable:
     if prompt_type in [PromptType.SimpleClusteringPrompt, PromptType.HardLabelsClusteringPrompt, PromptType.HardLabelsClusteringCoTPrompt]:
         return format_response_as_dictionary_of_sentences
-    elif prompt_type in [PromptType.MustLinkCannotLinkClusteringPrompt]:
-        return format_response_as_must_link_cannot_link
     elif prompt_type == PromptType.SimpleClusteringPrompt2:
         return format_response_as_dictionary_of_clusters
     elif prompt_type == PromptType.KPredictClusteringPrompt:
         return format_response_as_value_of_k
     else:
-        raise ValueError(f"No formatter found for {prompt_type}")
+        return None
 
 
-def format_response_as_dictionary_of_clusters(data: dict, size: int, text_index_offset: int = OFFSET) -> list:
+def format_response_as_dictionary_of_clusters(data: dict, size: int) -> list:
     labels = [-1] * size
     for label, keys in data['result'].items():
         for key in keys:
-            labels[key - text_index_offset] = label
+            labels[key] = label
     return labels
 
 
-def format_response_as_dictionary_of_sentences(data: dict, text_index_offset: int = OFFSET) -> list:
+def format_response_as_dictionary_of_sentences(data: dict) -> list:
     # labels = [-1] * size
     # for key, label in data['result'].items():
     #     labels[key - text_index_offset] = label
     # return labels
     result = {}
     for key, value in data['result'].items():
-        result[key - text_index_offset] = value
+        result[key] = value
     data['result'] = result
-    return data
-
-
-def format_response_as_must_link_cannot_link(data: dict, text_index_offset: int = OFFSET) -> list:
-    data['must_link'] = [(a - text_index_offset, b - text_index_offset) for (a, b) in data['must_link']]
-    data['cannot_link'] = [(a - text_index_offset, b - text_index_offset) for (a, b) in data['cannot_link']]
     return data
 
 def format_response_as_value_of_k(data: dict):

@@ -16,12 +16,12 @@
     Example:
 
     Input:
-    [ID: 1] The cat sat on the mat.
-    [ID: 2] A quick brown fox jumps over the lazy dog.
-    [ID: 3] There is a cat sitting on the mat.
-    [ID: 4] The dog lay lazily as the fox jumped over it.
-    [ID: 5] Cats are known to sit on mats.
-    [ID: 6] Foxes are swift and can jump high.
+    [ID: 0] The cat sat on the mat.
+    [ID: 1] A quick brown fox jumps over the lazy dog.
+    [ID: 2] There is a cat sitting on the mat.
+    [ID: 3] The dog lay lazily as the fox jumped over it.
+    [ID: 4] Cats are known to sit on mats.
+    [ID: 5] Foxes are swift and can jump high.
 
     Output:
     {
@@ -29,12 +29,12 @@
         "step2": "description of step 2 reasoning",
         "step3": "description of step 3 reasoning",
         "result": {
-            1: 0,
-            2: 1,
-            3: 0,
-            4: 1,
-            5: 0,
-            6: 1
+            0: 0,
+            1: 1,
+            2: 0,
+            3: 1,
+            4: 0,
+            5: 1
         }
     }
 

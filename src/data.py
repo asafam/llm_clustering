@@ -20,6 +20,7 @@ class DatasetName(Enum):
 
 class TextLabelDataset(Dataset):
     def __init__(self, texts, labels):
+        self.ids = list(range(len(texts)))
         self.texts = texts
         self.labels = labels
 
@@ -27,7 +28,7 @@ class TextLabelDataset(Dataset):
         return len(self.texts)
 
     def __getitem__(self, idx):
-        return self.texts[idx], self.labels[idx]
+        return self.ids[idx], self.texts[idx], self.labels[idx]
     
     def __str__(self) -> str:
         return f"{self.__class__.__name__}{len(self.texts)}"
@@ -94,46 +95,44 @@ def sample_dataset(
 ) -> pd.DataFrame:
     result_df = pd.DataFrame()
     df = pd.DataFrame({
-        'text': [item[0] for item in dataset],
-        'label': [item[1] for item in dataset]
+        'id': [item[0] for item in dataset],
+        'text': [item[1] for item in dataset],
+        'label': [item[2] for item in dataset]
     })
 
     # Seed the random generator to repeat results
     random.seed(random_state)
-    
-    # Returned a shuffled copy of the data in case n = 0
-    if n == 0:
-        result_df = df.sample(frac=1, random_state=random_state)
-        return result_df
 
     # sample labels
     unique_labels = df['label'].unique()
 
     if k is None:
-        selected_labels = []
+        selected_labels = list(unique_labels)
     elif 0 < k < 1:
         selected_labels = random.sample(list(unique_labels), math.ceil(k * len(unique_labels)))
     elif k > 0:
         selected_labels = random.sample(list(unique_labels), k)
-    elif k == 0:
-        selected_labels = list(unique_labels)
     else:
-        selected_labels = []
+        selected_labels = list(unique_labels)
+
+    df = df[df['label'].isin(selected_labels)]
+
+    # Returned a shuffled copy of the data in case n = 0
+    if n == 0:
+        result_df = df.sample(frac=1, random_state=random_state)
+        return result_df
 
     k = len(selected_labels)
 
     # Sample min_cluster_size documents from each selected intent class
-    if k > 0:
+    min_cluster_size = min(min_cluster_size, math.floor(n / k))
+    if min_cluster_size > 0:
         # Initialize list to hold sampled documents
         sampled_documents = []
 
-        min_cluster_size = min(min_cluster_size, math.floor(n / k))
         for label in selected_labels:
             label_df = df[df['label'] == label]
-            if min_cluster_size > 0:
-                sampled_label_df = label_df.sample(n=min(min_cluster_size, len(label_df)), random_state=random_state)
-            else:
-                sampled_label_df = pd.DataFrame()
+            sampled_label_df = label_df.sample(n=min(min_cluster_size, len(label_df)), random_state=random_state)
             sampled_documents.append(sampled_label_df)
 
         # Concatenate all sampled documents into a single DataFrame
@@ -151,5 +150,6 @@ def sample_dataset(
 
     # Concatenate the additional samples to the result DataFrame
     result_df = pd.concat([result_df, additional_samples])
+    result_df = result_df.sample(frac=1, random_state=random_state)
     return result_df
 

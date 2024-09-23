@@ -229,7 +229,7 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
         # embed the dataset for clustering
         all_embeddings = []
         all_labels = []
-        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
         for batch_texts, batch_labels in dataloader:
             batch_embeddings = text_embedding_model.embed(batch_texts)
             all_embeddings.append(batch_embeddings)
@@ -303,8 +303,9 @@ class LLMConstraintedClusteringQualityExperiment(BaseExperiment):
         # run the LLM predictions to create the constraints
         sample_texts = sample_df['text'].tolist()
         sample_labels = sample_df['label'].tolist()
+        sample_ids = sample_df['id'].tolist()
         constraint_model = BaseConstrainedLLM(llm=llm, constraint_type=constraint_type)
-        constraint_result = constraint_model.create_constraint(prompt_type=prompt_type, texts=sample_texts, labels=sample_labels, **kwargs)
+        constraint_result = constraint_model.create_constraint(prompt_type=prompt_type, ids=sample_ids, texts=sample_texts, labels=sample_labels, **kwargs)
         constraint = constraint_result.get('constraint')
 
         results = dict(

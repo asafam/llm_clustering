@@ -50,14 +50,13 @@ class HardLabelsClusteringContraints(PartitionsLevelClusteringConstraints):
     def get_k(self) -> int:
         return len(self.labels)
     
-    def evaluate(self, labels_true: list) -> dict:
-        logger = logging.getLogger('default')
-        labels_pred = [-1] * len(labels_true)
+    def evaluate(self, ids_true: list, labels_true: list) -> dict:
+        labels_pred = {}
+        for id in ids_true:
+            labels_pred[id] = -1
+
         for id, label in self.instances.items():
-            if id >= len(labels_pred):
-                logger.error(f"ID {id} with predicted label {label} is out-of-range")
-            else:
-                labels_pred[id] = label
+            labels_pred[id] = label
         return dict(
             ari = adjusted_rand_score(labels_true, labels_pred),
             nmi = normalized_mutual_info_score(labels_true, labels_pred),
@@ -154,7 +153,7 @@ class MustLinkCannotLinkInstanceLevelClusteringConstraints(PairwiseInstanceLevel
     def get_labels(self) -> list:
         return []
     
-    def evaluate(self, labels_true: list) -> dict:
+    def evaluate(self, ids_true: list, labels_true: list) -> dict:
         # Create ground truth pairs based on the true labels
         true_must_link = []
         true_cannot_link = []
@@ -209,7 +208,7 @@ class KClusteringContraints(ClusteringConstraints):
     def get_k(self) -> int:
         return self.k
     
-    def evaluate(self, labels_true: list) -> dict:
+    def evaluate(self, ids_true: list, labels_true: list) -> dict:
         predicted_k = self.k
         true_k = len(set(labels_true))
 

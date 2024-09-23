@@ -12,11 +12,11 @@ class BaseConstrainedLLM:
         self.constraint_type = constraint_type
     
 
-    def create_constraint(self, labels: Optional[list] = None, prompt_type: Optional[PromptType] = None, **kwargs):
+    def create_constraint(self, ids: Optional[list] = None, labels: Optional[list] = None, prompt_type: Optional[PromptType] = None, **kwargs):
         logger = logging.getLogger('default')
         # generate the prompt
         prompt_type = prompt_type or get_prompt_type(constraint_type=self.constraint_type)
-        prompt = generate_prompt(prompt_type=prompt_type, **kwargs)
+        prompt = generate_prompt(prompt_type=prompt_type, ids=ids, **kwargs)
 
         # execute prompt (possibly n times)
         data = self.llm.create_messages(prompt=prompt)
@@ -26,7 +26,7 @@ class BaseConstrainedLLM:
 
         # process results and generate constraints
         constraint = generate_constraint(data=data, constraint_type=self.constraint_type, **kwargs)
-        constraint_quality = constraint.evaluate(labels_true=labels) if labels else {}
+        constraint_quality = constraint.evaluate(labels_true=zip(ids, labels)) if labels else {}
         logger.debug(f"Constraint evaluation returned {constraint_quality}")
         result = dict(
             constraint=constraint,

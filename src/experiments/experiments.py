@@ -219,11 +219,12 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
         sample_df = sample_dataset(dataset=dataset, n=sample_n, k=k, min_cluster_size=min_cluster_size, random_state=random_state)
 
         # run the LLM predictions to create the constraints
+        sample_ids = sample_df['id'].tolist()
         sample_texts = sample_df['text'].tolist()
         sample_labels = sample_df['label'].tolist()
         constraint_model = BaseConstrainedLLM(llm=llm, constraint_type=constraint_type)
         k = len(set(sample_labels)) if llm_k_information_type == KInformationType.GroundTruthK else None
-        constraint_result = constraint_model.create_constraint(prompt_type=prompt_type, texts=sample_texts, labels=sample_labels, k=k, **kwargs)
+        constraint_result = constraint_model.create_constraint(prompt_type=prompt_type, ids=sample_ids, texts=sample_texts, labels=sample_labels, k=k, **kwargs)
         constraint = constraint_result.get('constraint')
 
         # embed the dataset for clustering
@@ -301,9 +302,9 @@ class LLMConstraintedClusteringQualityExperiment(BaseExperiment):
         sample_df = sample_dataset(dataset=dataset, n=sample_n, k=k, min_cluster_size=min_cluster_size, random_state=random_state)
 
         # run the LLM predictions to create the constraints
+        sample_ids = sample_df['id'].tolist()
         sample_texts = sample_df['text'].tolist()
         sample_labels = sample_df['label'].tolist()
-        sample_ids = sample_df['id'].tolist()
         constraint_model = BaseConstrainedLLM(llm=llm, constraint_type=constraint_type)
         constraint_result = constraint_model.create_constraint(prompt_type=prompt_type, ids=sample_ids, texts=sample_texts, labels=sample_labels, **kwargs)
         constraint = constraint_result.get('constraint')

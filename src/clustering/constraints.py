@@ -51,12 +51,15 @@ class HardLabelsClusteringContraints(PartitionsLevelClusteringConstraints):
         return len(self.labels)
     
     def evaluate(self, ids_true: list, labels_true: list) -> dict:
-        labels_pred = {}
+        labels_pred_dict = {}
         for id in ids_true:
-            labels_pred[id] = -1
+            labels_pred_dict[id] = -1
 
         for id, label in self.instances.items():
-            labels_pred[id] = label
+            if id in labels_pred_dict:
+                labels_pred_dict[id] = label
+        labels_pred = list(labels_pred_dict.values())
+
         return dict(
             ari = adjusted_rand_score(labels_true, labels_pred),
             nmi = normalized_mutual_info_score(labels_true, labels_pred),

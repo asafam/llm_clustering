@@ -86,7 +86,7 @@ class SimpleClusteringExperiment(BaseExperiment):
         all_embeddings = []
         all_labels = []
         dataloader = DataLoader(sampled_dataset, batch_size=batch_size, shuffle=False)
-        for batch_texts, batch_labels in dataloader:
+        for batch_ids, batch_texts, batch_labels in dataloader:
             batch_embeddings = text_embedding_model.embed(batch_texts)
             all_embeddings.append(batch_embeddings)
             all_labels.extend(batch_labels)

@@ -159,8 +159,8 @@ class MustLinkCannotLinkInstanceLevelClusteringConstraints(PairwiseInstanceLevel
         true_cannot_link = []
 
         # Compare all pairs and decide if they should be must-link or cannot-link based on true labels
-        for i in range(len(labels_true)):
-            for j in range(i + 1, len(labels_true)):
+        for i in range(len(ids_true)):
+            for j in range(i + 1, len(ids_true)):
                 if labels_true[i] == labels_true[j]:
                     true_must_link.append((i, j))
                 else:

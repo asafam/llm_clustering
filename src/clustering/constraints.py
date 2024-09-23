@@ -175,6 +175,7 @@ class MustLinkCannotLinkInstanceLevelClusteringConstraints(PairwiseInstanceLevel
         y_pred = []
 
         # Evaluate must-link predictions
+        print("self.must_link = " , self.must_link)
         for i, j in self.must_link:
             y_true.append(1 if (i, j) in true_must_link else 0)
             y_pred.append(1)

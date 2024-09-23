@@ -102,7 +102,7 @@ class SimpleClusteringExperiment(BaseExperiment):
         elif cluster_k_information_type == KInformationType.GroundTruthK:
             # otherwise, provide the true cluster number to the clustering model
             n_clusters = len(set(labels_true))
-            cluster_results = clustering_model.cluster(X, n_clusters=n_clusters, random_state=random_state)
+            cluster_results = clustering_model.cluster(X, n_clusters=n_clusters, k_optimization=k_optimization, random_state=random_state)
         else:
             raise ValueError(f"Illegal cluster_k_information_type given in BaseClustering: {cluster_k_information_type.value}")
         

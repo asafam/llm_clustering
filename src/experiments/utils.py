@@ -55,6 +55,8 @@ def get_experiment_results_item_value(item):
 def get_prompt_type(constraint_type: ConstraintsType) -> PromptType:
     if constraint_type == ConstraintsType.HardLabelsConstraints:
         return PromptType.HardLabelsClusteringPrompt
+    elif constraint_type == ConstraintsType.HardLabelsExcludeUncertainConstraints:
+        return PromptType.HardLabelsClusteringExcludeUncertainPrompt
     elif constraint_type == ConstraintsType.FuzzyLabelsConstraints:
         return PromptType.FuzzyLabelsClusteringPrompt
     elif constraint_type == ConstraintsType.MustLinkCannotLinkConstraints:

@@ -10,6 +10,7 @@ class PromptType(Enum):
     SimpleClusteringPrompt2 = 'simple_clustering_prompt1_1'
     HardLabelsClusteringPrompt = 'hard_labels_clustering_prompt'
     HardLabelsClusteringCoTPrompt = 'hard_labels_clustering_prompt_cot'
+    HardLabelsClusteringExcludeUncertainPrompt = 'hard_labels_clustering_exclude_undertain_prompt'
     FuzzyLabelsClusteringPrompt = 'fuzzy_labels_clustering_prompt'
     MustLinkCannotLinkClusteringPrompt = 'must_link_cannot_link_clustering_prompt'
     KPredictClusteringPrompt = 'k_predict_clustering_prompt'
@@ -42,7 +43,7 @@ def generate_prompt(prompt_type: PromptType, **kwargs):
 
 
 def get_formatter(prompt_type: PromptType) -> Callable:
-    if prompt_type in [PromptType.SimpleClusteringPrompt, PromptType.HardLabelsClusteringPrompt, PromptType.HardLabelsClusteringCoTPrompt]:
+    if prompt_type in [PromptType.SimpleClusteringPrompt, PromptType.HardLabelsClusteringPrompt, PromptType.HardLabelsClusteringCoTPrompt, PromptType.HardLabelsClusteringExcludeUncertainPrompt]:
         return format_response_as_dictionary_of_sentences
     elif prompt_type == PromptType.SimpleClusteringPrompt2:
         return format_response_as_dictionary_of_clusters

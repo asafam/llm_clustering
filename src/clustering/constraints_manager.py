@@ -5,6 +5,7 @@ from clustering.utils import *
 
 class ConstraintsType(Enum):
     HardLabelsConstraints='HardLabelsConstraints',
+    HardLabelsExcludeUncertainConstraints='HardLabelsExcludeUncertainConstraints',
     FuzzyLabelsConstraints='FuzzyLabelsConstraints',
     MustLinkCannotLinkConstraints='MustLinkCannotLinkConstraints',
     KConstraint='KConstraint',
@@ -17,7 +18,7 @@ class KInformationType(Enum):
 
 
 def generate_constraint(data: any, constraint_type: ConstraintsType, **kwargs):
-    if constraint_type == ConstraintsType.HardLabelsConstraints:
+    if constraint_type in [ConstraintsType.HardLabelsConstraints, ConstraintsType.HardLabelsExcludeUncertainConstraints]:
         instances = data.get('result')
         return HardLabelsClusteringContraints(instances=instances)
     elif constraint_type == ConstraintsType.FuzzyLabelsConstraints:

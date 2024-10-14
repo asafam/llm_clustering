@@ -91,6 +91,7 @@ def sample_dataset(
     n: int = 0, 
     k: Optional[int|float] = None, 
     min_cluster_size: int = 1, 
+    exclude_ids: list = [],
     random_state: int = 42
 ) -> pd.DataFrame:
     result_df = pd.DataFrame()
@@ -102,6 +103,9 @@ def sample_dataset(
 
     # Seed the random generator to repeat results
     random.seed(random_state)
+
+    # Apply exclude filters
+    df = df[~df['id'].isin(exclude_ids)]
 
     # sample labels
     unique_labels = df['label'].unique()

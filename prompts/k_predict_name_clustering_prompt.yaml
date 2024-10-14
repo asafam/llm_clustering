@@ -1,0 +1,43 @@
+- prompt: |
+    You are a sophisticated language model capable of understanding and processing natural language. Your task is to name the clusters of similar sentences based on {hint}, assigning each sentence to exactly one cluster. Follow these instructions carefully:
+
+    1. Input: You will be provided with a list of sentences, each identified by a unique ID.
+
+    2. Clustering Criteria:
+        - Semantic Similarity: Group sentences that convey similar meanings, even if they use different words or structures.
+        - Contextual Relevance: Sentences should be in the same cluster if they are relevant to the same topic or idea.
+        - Paraphrasing: Sentences that are paraphrases of each other should be clustered together.
+        - When unsure, prefer assigning sentences to an existing cluster instead of creating a new one, to avoid over-segmentation.
+
+    3. Output:
+        - Output your response in a JSON format.
+        - Return the names in a list structure.
+        - Do not return anything else.
+
+    Example:
+
+    Input:
+    [ID: 0] The cat sat on the mat.
+    [ID: 1] A quick brown fox jumps over the lazy dog.
+    [ID: 2] There is a cat sitting on the mat.
+    [ID: 3] The dog lay lazily as the fox jumped over it.
+    [ID: 4] Cats are known to sit on mats.
+    [ID: 5] Foxes are swift and can jump high.
+
+    Output:
+    {
+        "result": [
+            "Cats",
+            "Dogs"
+        ]
+    }
+
+    Please cluster the sentence IDs below according to the criteria mentioned above.
+
+    Sentences for Clustering:
+    {texts}
+
+    {k_info}
+
+    Output:
+

@@ -5,6 +5,7 @@ import logging
 from clustering.constraints_manager import ConstraintsType
 from llms.utils import PromptType
 from enum import Enum
+import logging
 
 
 def save_experiments(data, file_path, s3_bucket_name=None, s3_object_base_path=None):
@@ -52,6 +53,35 @@ def get_experiment_results_item_value(item):
     else:
         return str(item)
 
+
+def setup_logger(file_path: str):
+    # Create or retrieve the logger
+    logger = logging.getLogger('default')
+    
+    # Remove all existing handlers
+    if logger.hasHandlers():
+        logger.handlers.clear()
+    
+    logger.setLevel(logging.DEBUG)
+    logger.propagate = False
+
+    # Stream Handler (for console output)
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
+
+    # File Handler (for file output)
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    file_handler = logging.FileHandler(file_path)  # Log file name (you can specify the path)
+    file_handler.setLevel(logging.DEBUG) # Set the log level for file handler
+    file_handler.setFormatter(formatter) # Use the same formatter
+    logger.addHandler(file_handler)
+    
+    return logger
+
+
 def get_prompt_type(constraint_type: ConstraintsType) -> PromptType:
     if constraint_type == ConstraintsType.HardLabelsConstraints:
         return PromptType.HardLabelsClusteringPrompt
@@ -61,5 +91,9 @@ def get_prompt_type(constraint_type: ConstraintsType) -> PromptType:
         return PromptType.FuzzyLabelsClusteringPrompt
     elif constraint_type == ConstraintsType.MustLinkCannotLinkConstraints:
         return PromptType.MustLinkCannotLinkClusteringPrompt
-    elif constraint_type == ConstraintsType.KConstraint:
-        return PromptType.KPredictClusteringPrompt
+    elif constraint_type == ConstraintsType.MustLinkCannotLinkViaHardLabelsExcludeUncertainConstraints:
+        return PromptType.HardLabelsClusteringExcludeUncertainPrompt
+    elif constraint_type == ConstraintsType.KCountConstraint:
+        return PromptType.KPredictNumberClusteringPrompt
+    elif constraint_type == ConstraintsType.KNameConstraint:
+        return PromptType.KPredictNameClusteringPrompt

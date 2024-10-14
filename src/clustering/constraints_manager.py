@@ -8,7 +8,9 @@ class ConstraintsType(Enum):
     HardLabelsExcludeUncertainConstraints='HardLabelsExcludeUncertainConstraints',
     FuzzyLabelsConstraints='FuzzyLabelsConstraints',
     MustLinkCannotLinkConstraints='MustLinkCannotLinkConstraints',
-    KConstraint='KConstraint',
+    MustLinkCannotLinkViaHardLabelsExcludeUncertainConstraints='MustLinkCannotLinkViaHardLabelsExcludeUncertainConstraints',
+    KCountConstraint='KCountConstraint',
+    KNameConstraint='KNameConstraint',
 
 
 class KInformationType(Enum):
@@ -19,20 +21,27 @@ class KInformationType(Enum):
 
 def generate_constraint(data: any, constraint_type: ConstraintsType, **kwargs):
     if constraint_type in [ConstraintsType.HardLabelsConstraints, ConstraintsType.HardLabelsExcludeUncertainConstraints]:
-        instances = data.get('result')
-        return HardLabelsClusteringContraints(instances=instances)
+        sentences_labels = data.get('sentences_labels')
+        return HardLabelsClusteringContraints(sentences_labels=sentences_labels)
     elif constraint_type == ConstraintsType.FuzzyLabelsConstraints:
-        instances = data.get('result')
-        return FuzzyLabelsClusteringContraints(instances=data)
+        sentences_labels = data.get('sentences_labels')
+        return FuzzyLabelsClusteringContraints(sentences_labels=data)
     elif constraint_type == ConstraintsType.MustLinkCannotLinkConstraints:
         must_link = data.get('must_link', [])
         cannot_link = data.get('cannot_link', [])
         if not must_link and not cannot_link:
             raise ValueError("Must link and cannot link constraints are both empty")
         return MustLinkCannotLinkInstanceLevelClusteringConstraints(must_link=must_link, cannot_link=cannot_link)
-    elif constraint_type == ConstraintsType.KConstraint:
-        k = data.get('result')
+    elif constraint_type == ConstraintsType.MustLinkCannotLinkViaHardLabelsExcludeUncertainConstraints:
+        sentences_labels = data.get('sentences_labels')
+        must_link, cannot_link = transform_hard_labels_to_ml_cl(sentences_labels)
+        return MustLinkCannotLinkInstanceLevelClusteringConstraints(must_link=must_link, cannot_link=cannot_link, sentences_labels=sentences_labels)
+    elif constraint_type == ConstraintsType.KCountConstraint:
+        k = data.get('k')
         return KClusteringContraints(k=k)
+    elif constraint_type == ConstraintsType.KNameConstraint:
+        label_names = data.get('result')
+        return KClusteringContraints(label_names=label_names)
     else:
         raise ValueError(f'No constraint matching the passed type {constraint_type}')
 

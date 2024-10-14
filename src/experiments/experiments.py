@@ -6,15 +6,17 @@ from torch.utils.data import DataLoader
 import pandas as pd
 import numpy as np
 from data import DatasetName, TextLabelDataset, load_dataset_by_name, sample_dataset, get_dataset_from_df
-from clustering.constraints_manager import ConstraintsType, KInformationType
+from clustering.constraints_manager import ConstraintsType, KInformationType, generate_constraint
+from clustering.constraints import *
 from clustering.models.base_models import ClusteringModel
 from clustering.optimizations import KOptimization
 from clustering.utils import evaluate_clustering
 from embedding.models import TextEmbeddingModel
 from llms.models import LLM
+from llms.llm_manager import get_prompt_builder
 from llms.utils import PromptType, generate_prompt, get_formatter
 from experiments.constrained_models import BaseConstrainedLLM
-from experiments.utils import get_experiment_results_item_value
+from experiments.utils import *
 import logging
 
 
@@ -287,7 +289,7 @@ class LLMConstraintedClusteringQualityExperiment(BaseExperiment):
     def run(
             self,
             dataset_name: DatasetName,
-            sample_n: int, 
+            sample_n: int|list, 
             llm: LLM,
             constraint_type: ConstraintsType,
             prompt_type: Optional[PromptType] = None,
@@ -302,20 +304,61 @@ class LLMConstraintedClusteringQualityExperiment(BaseExperiment):
         # get data
         dataset = load_dataset_by_name(dataset_name=dataset_name)
 
-        # sample subset
-        sample_df = sample_dataset(dataset=dataset, n=sample_n, k=k, min_cluster_size=min_cluster_size, random_state=random_state)
+        ids = []
+        labels_true = []
+        
+        prompt_type = prompt_type or get_prompt_type(constraint_type=constraint_type)
+        prompt_builder = get_prompt_builder(prompt_type=prompt_type)
+        messages = []
+        data = None
+        for step in range(prompt_builder.get_steps_count()):
+            # sample subset
+            n = sample_n[min(step, len(sample_n) - 1)] if type(sample_n) == list else sample_n
+            sample_df = sample_dataset(dataset=dataset, n=n, k=k, min_cluster_size=min_cluster_size, exclude_ids=ids, random_state=(random_state + step * 1000))
+            sample_ids = sample_df['id'].tolist()
+            sample_texts = sample_df['text'].tolist()
+            sample_labels = sample_df['label'].tolist()
 
-        # run the LLM predictions to create the constraints
-        sample_ids = sample_df['id'].tolist()
-        sample_texts = sample_df['text'].tolist()
-        sample_labels = sample_df['label'].tolist()
-        constraint_model = BaseConstrainedLLM(llm=llm, constraint_type=constraint_type)
-        constraint_result = constraint_model.create_constraint(prompt_type=prompt_type, ids=sample_ids, texts=sample_texts, labels=sample_labels, **kwargs)
-        constraint = constraint_result.get('constraint')
+            ids += sample_ids
+            labels_true += sample_labels
+            # run the LLM predictions to create the constraints
 
+            # Generate the prompt
+            prompt = prompt_builder.build_prompt(step=step, context=data, ids=sample_ids, texts=sample_texts, **kwargs) # Build the prompt
+
+            # Send prompt to LLM
+            messages += [
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+            data_raw, data_raw_text = llm.create_messages(messages=messages) # Call the LLM with the prompt
+            messages += [
+                {
+                    "role": "assistant",
+                    "content": data_raw_text
+                }
+            ]
+            # Format the output
+            format_func = get_formatter(prompt_type=prompt_type, step=step)
+            data = format_func(data_raw, context=data) if format_func else data_raw
+
+
+        # Generate the constraints
+        constraint = generate_constraint(data=data, constraint_type=constraint_type, ids=sample_ids, texts=sample_texts, labels=sample_labels, **kwargs)
+        constraint_quality = constraint.evaluate(ids_true=ids, labels_true=labels_true)
+        logger.debug(f"Constraint evaluation returned {constraint_quality}")
+        constraint_result = dict(
+            constraint=constraint,
+            prompt=prompt,
+            constraint_quality = constraint_quality
+        )
+
+        # Build the result
         results = dict(
-            k_true=len(set(sample_labels)),
-            k_pred=constraint.get_k(),
+            ids=ids,
+            labels_true=labels_true
         )
         results.update(constraint_result)
 

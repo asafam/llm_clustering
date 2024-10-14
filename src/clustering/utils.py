@@ -1,8 +1,9 @@
+from collections import defaultdict
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
-from sklearn.metrics import silhouette_score, adjusted_rand_score, normalized_mutual_info_score, v_measure_score, davies_bouldin_score
+from sklearn.metrics import precision_score, recall_score, accuracy_score, f1_score, silhouette_score, adjusted_rand_score, normalized_mutual_info_score, v_measure_score, davies_bouldin_score
 import logging
 
 
@@ -28,6 +29,17 @@ def visualize_clusters(all_embeddings, kmeans_labels):
     plt.show()
 
 
+def evaluate_k(k_true: int, k_pred: int) -> dict:
+    return dict(
+        k_true = k_true,
+        k_pred = k_pred,
+        absolute_difference = abs(k_pred - k_true),
+        relative_error = abs(k_pred - k_true) / k_true * 100,
+        normalized_absolute_error = abs(k_pred - k_true) / k_true,
+        squared_error = (k_pred - k_true) ** 2,
+    )
+
+
 def evaluate_clustering(labels_true, labels_pred, X=None):
     logger = logging.getLogger('default')
     silhouette_avg = silhouette_score(X, labels_pred) if X is not None else None
@@ -49,3 +61,76 @@ def evaluate_clustering(labels_true, labels_pred, X=None):
         nmi = nmi,
         v_measure = v_measure,
     )
+
+
+def evaluate_must_link_cannot_link(must_link_true: list, cannot_link_true: list, must_link_pred: list, cannot_link_pred: list) -> dict:
+    result = dict(
+        must_link = _evaluate_pairs(must_link_true, must_link_pred),
+        cannot_link = _evaluate_pairs(cannot_link_true, cannot_link_pred),
+    )
+    return result
+
+
+def _evaluate_pairs(pairs_true: list, pairs_pred: list) -> dict:
+    # Normalize pairs to ensure order consistency
+    pairs_true = set(tuple(sorted(pair)) for pair in pairs_true)
+    pairs_pred = set(tuple(sorted(pair)) for pair in pairs_pred)
+
+     # Create a unified set of all possible pairs from both lists
+    all_pairs = pairs_true.union(pairs_pred)
+    
+    # Convert sets to lists of 1 (must-link) or 0 (no link)
+    y_true = [1 if pair in pairs_true else 0 for pair in all_pairs]
+    y_pred = [1 if pair in pairs_pred else 0 for pair in all_pairs]
+
+    # Calculate precision, recall, accuracy, and f1 scores
+    precision = precision_score(y_true, y_pred)
+    recall = recall_score(y_true, y_pred)
+    accuracy = accuracy_score(y_true, y_pred)
+    f1 = f1_score(y_true, y_pred)
+    
+    return dict(
+        precision=precision, 
+        recall=recall, 
+        accuracy=accuracy, 
+        f1=f1
+    )
+
+
+def transform_hard_labels_to_ml_cl(sentences_labels):
+    must_link = []
+    cannot_link = []
+    for id1, label1 in sentences_labels.items():
+        for id2, label2 in sentences_labels.items():
+            if id1 != id2:
+                if label1 == label2 and (id2, id1) not in must_link:
+                    must_link.append((id1, id2))
+                elif (id2, id1) not in cannot_link:
+                    cannot_link.append((id1, id2))
+    return must_link, cannot_link
+
+
+def get_true_ml_cl(ids_true: list, labels_true: list):
+    # Create ground truth pairs based on the true labels
+    must_link_true = []
+    cannot_link_true = []
+
+    # Compare all pairs and decide if they should be must-link or cannot-link based on true labels
+    for i in range(len(ids_true)):
+        for j in range(i + 1, len(ids_true)):
+            if labels_true[i] == labels_true[j]:
+                must_link_true.append((ids_true[i], ids_true[j]))
+            else:
+                cannot_link_true.append((ids_true[i], ids_true[j]))
+
+    return must_link_true, cannot_link_true
+
+
+def count_singletons(sentences_labels: dict) -> int:
+    label_to_ids = defaultdict(list)
+    for id_, label in sentences_labels.items():
+        label_to_ids[label].append(id_)
+
+    # Count how many labels have only one ID associated with them
+    count_single_id_labels = sum(1 for ids in label_to_ids.values() if len(ids) == 1)
+    return count_single_id_labels

@@ -6,6 +6,7 @@ import logging
 import torch
 from torch import optim, nn
 from clustering.models.base_models import BaseKMeans
+from clustering.models.lib.cop_kmeans import cop_kmeans
 
 
 class MustLinkCannotLinkKMeans(BaseKMeans):
@@ -97,3 +98,11 @@ class ContrastiveLoss(nn.Module):
                           label * torch.pow(torch.clamp(self.margin - distance, min=0.0), 2))  # Cannot-link: maximize distance
         return loss        
 
+
+class MustLinkCannotLinkCOPKMeans(BaseKMeans):
+    def _cluster(self, X, n_clusters: int, constraint: MustLinkCannotLinkInstanceLevelClusteringConstraints, k_optimization: KOptimization, max_iter: int = 300, tol: float = 1e-4, random_state: int = 42):
+        must_link = constraint.must_link
+        cannot_link = constraint.cannot_link
+        labels, centers = cop_kmeans(X, k=n_clusters, ml=must_link, cl=cannot_link, max_iter=max_iter, tol=tol, random_state=random_state)
+        score = k_optimization.score(X=X, labels=labels, centers=centers)
+        return labels, None, score

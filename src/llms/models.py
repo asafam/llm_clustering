@@ -4,7 +4,7 @@ import logging
 
 
 class LLM:
-    def create_messages(self, prompt: str, **kwargs):
+    def create_messages(self, messages: list, **kwargs):
         raise NotImplementedError()
     
     def __str__(self) -> str:
@@ -20,7 +20,7 @@ class Claude(LLM):
     def __str__(self) -> str:
         return f"{self.__class__.__name__}(model={self.model}, aws_region={self.aws_region})"
 
-    def create_messages(self, prompt: str, max_tokens: int = 4096, temperature=0):
+    def create_messages(self, messages: list, max_tokens: int = 4096, temperature=0):
         logger = logging.getLogger('default')
         client = AnthropicBedrock(
             aws_region=self.aws_region,
@@ -30,12 +30,7 @@ class Claude(LLM):
             model=self.model,
             max_tokens=max_tokens,
             temperature=temperature,
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
+            messages=messages
         )
 
         data_text = response.content[0].text
@@ -43,7 +38,7 @@ class Claude(LLM):
         
         try:
             data = ast.literal_eval(data_text)
-            return data
+            return data, data_text
         except:
             raise Exception(f"Error casting the response to an object:\n{data_text}")
         

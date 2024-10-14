@@ -9,7 +9,7 @@ from clustering.models.base_models import BaseKMeans
 
 class HardLabelsKMeans(BaseKMeans):
     def _cluster(self, X, n_clusters: int, constraint: HardLabelsClusteringContraints, k_optimization: KOptimization, max_iter: int = 300, tol: float = 1e-4, random_state: int = 42):
-        hard_labels = constraint.instances
+        hard_labels = constraint.sentences_labels
         labels, _, kmeans, score = self._hard_constrained_kmeans(
             X=X,
             hard_labels=hard_labels, 

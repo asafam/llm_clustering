@@ -1,5 +1,5 @@
 from sklearn.metrics import silhouette_score, adjusted_rand_score, normalized_mutual_info_score, v_measure_score, davies_bouldin_score
-
+from scipy.spatial import distance
 
 class KOptimization:
     def score(self, **kwargs) -> int:
@@ -10,6 +10,14 @@ class KOptimization:
     
 
 class SilhouetteKOptimization(KOptimization):    
-    def score(self, X, labels) -> int:
+    def score(self, X, labels, **kwargs) -> int:
         score = silhouette_score(X, labels)
+        return score
+    
+
+class InteriaMinimizationKOptimization(KOptimization):    
+    def score(self, X, labels, centers) -> int:
+        score = -sum(
+              distance.euclidean(X[i], centers[labels[i]]) for i in range(X.shape[0])
+        )
         return score

@@ -1,9 +1,10 @@
+import numpy as np
 from collections import defaultdict
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
-from sklearn.metrics import precision_score, recall_score, accuracy_score, f1_score, silhouette_score, adjusted_rand_score, normalized_mutual_info_score, v_measure_score, davies_bouldin_score
+from sklearn.metrics import *
 import logging
 
 
@@ -47,12 +48,17 @@ def evaluate_clustering(labels_true, labels_pred, X=None):
     ari = adjusted_rand_score(labels_true, labels_pred)
     nmi = normalized_mutual_info_score(labels_true, labels_pred)
     v_measure = v_measure_score(labels_true, labels_pred)
+    homogeneity, completeness, v_measure = homogeneity_completeness_v_measure(labels_true, labels_pred)
+    fmi = fowlkes_mallows_score(labels_true, labels_pred)
+    cm = confusion_matrix(labels_true, labels_pred)
     
     logger.debug(f"Silhouette Score: {silhouette_avg}")
     logger.debug(f"Davies-Bouldin Index: {davies_bouldin}")
     logger.debug(f"Adjusted Rand Index (ARI): {ari}")
     logger.debug(f"Normalized Mutual Information (NMI): {nmi}")
     logger.debug(f"V-measure: {v_measure}")
+    logger.debug(f"Homogeneity: {homogeneity}")
+    logger.debug(f"Completeness: {completeness}")
     
     return dict(
         silhouette_avg = silhouette_avg,
@@ -60,6 +66,10 @@ def evaluate_clustering(labels_true, labels_pred, X=None):
         ari = ari,
         nmi = nmi,
         v_measure = v_measure,
+        homogeneity=homogeneity,
+        completeness=completeness,
+        fmi=fmi,
+        cm=cm
     )
 
 
@@ -134,3 +144,55 @@ def count_singletons(sentences_labels: dict) -> int:
     # Count how many labels have only one ID associated with them
     count_single_id_labels = sum(1 for ids in label_to_ids.values() if len(ids) == 1)
     return count_single_id_labels
+
+
+def compute_inertia(X, labels):
+    """
+    Compute inertia as the sum of squared distances between each point
+    and the centroid of its assigned cluster.
+
+    Parameters:
+    - X: Data points (array of shape [n_samples, n_features]).
+    - labels: Cluster labels for each point.
+
+    Returns:
+    - inertia: The sum of squared distances to cluster centroids.
+    """
+    n_clusters = len(np.unique(labels))  # Number of clusters
+    inertia = 0
+
+    # Compute the centroid of each cluster and the inertia
+    for cluster in range(n_clusters):
+        # Get the points belonging to the current cluster
+        cluster_points = X[labels == cluster]
+        
+        # Compute the centroid of the current cluster
+        if len(cluster_points) > 0:
+            centroid = np.mean(cluster_points, axis=0)
+            
+            # Compute the sum of squared distances to the centroid
+            inertia += np.sum((cluster_points - centroid) ** 2)
+
+    return inertia
+
+
+def compute_centroids(embeddings, labels):
+    """
+    Compute the centroids of clusters based on given vectors and labels.
+
+    Parameters:
+    vectors (array-like): List or array of vectors (points).
+    labels (array-like): Corresponding labels for each vector.
+
+    Returns:
+    centroids (numpy array): Centroids of the clusters.
+    """
+    # Group vectors by their labels
+    clusters = defaultdict(list)
+    for vector, label in zip(embeddings, labels):
+        clusters[label].append(vector)
+
+    # Compute the centroid for each cluster
+    centroids = np.array([np.mean(cluster, axis=0) for cluster in clusters.values()])
+
+    return centroids

@@ -7,7 +7,19 @@ class ClusteringConstraints:
     def __str__(self) -> str:
         return self.__class__.__name__
     
+    def get_ids(self) -> list:
+        raise NotImplementedError()
+    
     def get_labels(self) -> list:
+        raise NotImplementedError()
+    
+    def get_k(self) -> int:
+        raise NotImplementedError()
+    
+    def get_unique_labels(self) -> list:
+        raise None
+    
+    def get_ml_cl(self) -> Tuple[list, list]:
         raise NotImplementedError()
 
 
@@ -39,19 +51,29 @@ class HardLabelsClusteringContraints(PartitionsLevelClusteringConstraints):
         """
         super().__init__()
         
-        self.labels = sorted(set(sentences_labels.values())) # Get the unique labels and sort them
-        label_to_index = {label: index for index, label in enumerate(self.labels)} # Create a mapping from label to its index
+        self.unique_labels = sorted(set(sentences_labels.values())) # Get the unique labels and sort them
+        label_to_index = {label: index for index, label in enumerate(self.unique_labels)} # Create a mapping from label to its index
         self.sentences_labels = {id: label_to_index[label] for id, label in sentences_labels.items()} # Translate the labels to their indices
         self.instances = self.sentences_labels
+        self.must_link, self.cannot_link = transform_hard_labels_to_ml_cl(sentences_labels)
 
     def __str__(self) -> str:
         return str(self.sentences_labels)
     
+    def get_ids(self) -> list:
+        return list(self.sentences_labels.keys())
+    
     def get_labels(self) -> list:
-        return self.labels
+        return list(self.sentences_labels.values())
+    
+    def get_unique_labels(self) -> list:
+        return self.unique_labels
     
     def get_k(self) -> int:
-        return len(self.labels)
+        return len(self.unique_labels)
+    
+    def get_ml_cl(self) -> Tuple[list, list]:
+        return self.must_link, self.cannot_link
     
     def evaluate(self, ids_true: list, labels_true: list) -> dict:
         labels_pred_dict = {}
@@ -63,7 +85,7 @@ class HardLabelsClusteringContraints(PartitionsLevelClusteringConstraints):
                 labels_pred_dict[id] = label
         labels_pred = list(labels_pred_dict.values())
 
-        must_link_pred, cannot_link_pred = transform_hard_labels_to_ml_cl(self.sentences_labels)
+        must_link_pred, cannot_link_pred = self.must_link, self.cannot_link
         must_link_true, cannot_link_true = get_true_ml_cl(ids_true=ids_true, labels_true=labels_true)
 
         result = dict(
@@ -178,12 +200,12 @@ class MustLinkCannotLinkInstanceLevelClusteringConstraints(PairwiseInstanceLevel
         self.sentences_labels = sentences_labels
 
         if sentences_labels:
-            self.labels = sorted(set(sentences_labels.values())) # Get the unique labels and sort them
+            self.unique_labels = sorted(set(sentences_labels.values())) # Get the unique labels and sort them
             label_to_index = {label: index for index, label in enumerate(self.labels)} # Create a mapping from label to its index
             self.sentences_labels = {id: label_to_index[label] for id, label in sentences_labels.items()} # Translate the labels to their indices
 
-    def get_labels(self) -> list:
-        return self.labels
+    def get_unique_labels(self) -> list:
+        return self.unique_labels
     
     def get_k(self) -> int:
         return 0
@@ -216,9 +238,6 @@ class KClusteringContraints(ClusteringConstraints):
 
     def __str__(self) -> str:
         return str(self.k)
-    
-    def get_labels(self) -> list:
-        return None
     
     def get_k(self) -> int:
         return self.k

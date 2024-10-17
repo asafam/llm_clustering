@@ -16,11 +16,14 @@ class DatasetName(Enum):
     BANKING77 = "BANKING77"
     TOPV2 = "TOPV2"
     AGNEWS = "AGNEWS"
+    REUTERS21578 = "REUTERS21578"
+    MEDRXIV = "MEDRXIV"
+    BIORXIV = "BIORXIV"
 
 
 class TextLabelDataset(Dataset):
-    def __init__(self, texts, labels):
-        self.ids = list(range(len(texts)))
+    def __init__(self, texts, labels, ids: Optional[list] = None):
+        self.ids = ids if ids is not None else list(range(len(texts)))
         self.texts = texts
         self.labels = labels
 
@@ -44,6 +47,12 @@ def load_dataset_by_name(dataset_name: DatasetName, subset: str = 'test') -> Tex
         dataset = load_dataset('fancyzhx/ag_news')
     elif dataset_name == DatasetName.TOPV2:
         dataset = load_dataset('WillHeld/top_v2')
+    elif dataset_name == DatasetName.MEDRXIV:
+        dataset = load_dataset('mteb/medrxiv-clustering-p2p')
+    elif dataset_name == DatasetName.BIORXIV:
+        dataset = load_dataset('mteb/biorxiv-clustering-p2p')
+    elif dataset_name == DatasetName.REUTERS21578:
+        dataset = load_dataset('yangwang825/reuters-21578')
 
     else:
         raise ValueError(f"No supported dataset {dataset_name}")
@@ -52,7 +61,7 @@ def load_dataset_by_name(dataset_name: DatasetName, subset: str = 'test') -> Tex
     label_column = get_label_column(dataset_name=dataset_name)
 
     texts = dataset[subset][text_column]
-    labels = dataset[subset][label_column]
+    labels = [label[0] if type(label) == list else label for label in dataset[subset][label_column]]
 
     if type(labels[0] == str):
         label_encoder = LabelEncoder()
@@ -62,27 +71,32 @@ def load_dataset_by_name(dataset_name: DatasetName, subset: str = 'test') -> Tex
     return text_label_dataset
 
 
-def get_dataset_from_df(df: pd.DataFrame, text_column: str = 'text', label_column: str = 'label') -> TextLabelDataset:
+def get_dataset_from_df(df: pd.DataFrame, id_column: str = 'id', text_column: str = 'text', label_column: str = 'label') -> TextLabelDataset:
+    ids = df[id_column].tolist() if 'id' in df else None
     texts = df[text_column].tolist()
     labels = df[label_column].tolist()
 
-    text_label_dataset = TextLabelDataset(texts, labels)
+    text_label_dataset = TextLabelDataset(texts, labels, ids)
     return text_label_dataset
 
 
 def get_text_column(dataset_name: DatasetName):
     label_column = 'text'
-    if dataset_name == dataset_name.TOPV2:
+    if dataset_name == DatasetName.TOPV2:
         label_column = 'utterance'
+    elif dataset_name in [DatasetName.MEDRXIV, DatasetName.BIORXIV]:
+        label_column = 'sentences'
     return label_column
 
 
 def get_label_column(dataset_name: DatasetName):
     label_column = 'label'
-    if dataset_name == dataset_name.CLINC:
+    if dataset_name == DatasetName.CLINC:
         label_column = 'intent'
-    elif dataset_name == dataset_name.TOPV2:
+    elif dataset_name == DatasetName.TOPV2:
         label_column = 'domain'
+    elif dataset_name in [DatasetName.MEDRXIV, DatasetName.BIORXIV]:
+        label_column = 'labels'
     return label_column
 
 

@@ -1,19 +1,78 @@
 from typing import *
 import numpy as np
-from clustering.constraints import *
-from clustering.optimizations import KOptimization
-import logging
+from sklearn.cluster import SpectralClustering
+from sklearn.metrics.pairwise import rbf_kernel
 import torch
 from torch import optim, nn
-from clustering.models.base_models import BaseKMeans
+from clustering.constraints import *
+from clustering.optimizations import KOptimization
+from clustering.models.base_models import *
 from clustering.models.lib.cop_kmeans import cop_kmeans
+import logging
 
+class MustLinkCannotLinkClusteringModel(KHyperparamClusteringModel):
+    def __init__(self, ml_cl_constraint_mask: Optional[dict] = None) -> None:
+        super().__init__()
+        self.ml_cl_constraint_mask = ml_cl_constraint_mask if ml_cl_constraint_mask is not None else {}
+
+    def __str__(self) -> str:
+        if self.ml_cl_constraint_mask: 
+            return f"{self.__class__.__name__}({self.ml_cl_constraint_mask})"
+        else:
+            return super().__str__()
+
+    def _cluster(
+            self, 
+            X,
+            ids: list,
+            constraint: ClusteringConstraints,
+            n_clusters: Optional[int] = None,
+            random_state: int = 42, 
+            gamma=1.0,
+            verbose: bool = True,
+            **kwargs
+        ):
+        logger = logging.getLogger('default')
+        logger.info(f"Clustering model: {type(self).__name__}")
+
+        # Get the ML and CL constraints
+        must_link, cannot_link = constraint.get_ml_cl()
+        must_link = must_link if self.ml_cl_constraint_mask.get('must_link', True) else []
+        cannot_link = cannot_link if self.ml_cl_constraint_mask.get('cannot_link', True) else []
+
+        # Step 1: Compute the RBF (Gaussian) affinity matrix
+        affinity = rbf_kernel(X, gamma=gamma)
+
+        # Step 2: Apply must-link and cannot-link constraints to the affinity matrix
+        for i, j in must_link:
+            affinity[i, j] = affinity[j, i] = 1.0  # set similarity to 1 between must-linked points
+
+        for i, j in cannot_link:
+            affinity[i, j] = affinity[j, i] = 0.0  # set similarity to 0 between cannot-linked points
+
+        # Step 3: Perform spectral clustering with the modified affinity matrix
+        spectral = SpectralClustering(n_clusters=n_clusters, affinity='precomputed', random_state=random_state, verbose=verbose)
+        labels = spectral.fit_predict(affinity)
+
+        return labels
+        
 
 class MustLinkCannotLinkKMeans(BaseKMeans):
+    def __init__(self, ml_cl_constraint_mask: Optional[dict] = None) -> None:
+        super().__init__()
+        self.ml_cl_constraint_mask = ml_cl_constraint_mask if ml_cl_constraint_mask is not None else {}
+    
+    def __str__(self) -> str:
+        if self.ml_cl_constraint_mask: 
+            return f"{self.__class__.__name__}(ml_cl_constraint_mask={self.ml_cl_constraint_mask})"
+        else:
+            return super().__str__()
+
     def cluster(
             self, 
             X,
-            constraint: MustLinkCannotLinkInstanceLevelClusteringConstraints,
+            ids: list,
+            constraint: ClusteringConstraints,
             k_optimization: KOptimization, 
             n_clusters: Optional[int] = None,
             min_k: int = 2,
@@ -24,7 +83,15 @@ class MustLinkCannotLinkKMeans(BaseKMeans):
             random_state: int = 42,
             **kwargs
         ):
-        P = self._train(X, must_link=constraint.must_link, cannot_link=constraint.cannot_link, num_epochs=num_epochs)
+        logger = logging.getLogger('default')
+        logger.info(f"Clustering model: {type(self).__name__}")
+
+        must_link, cannot_link = constraint.get_ml_cl()
+        must_link = must_link if self.ml_cl_constraint_mask.get('must_link', True) else []
+        cannot_link = cannot_link if self.ml_cl_constraint_mask.get('cannot_link', True) else []
+
+        # Train similarity weight matrix
+        P = self._train(X, must_link=must_link, cannot_link=cannot_link, num_epochs=num_epochs)
 
         # After training, apply the learned projection matrix P
         X_projected = np.dot(X, P.detach().cpu().numpy())
@@ -100,9 +167,22 @@ class ContrastiveLoss(nn.Module):
 
 
 class MustLinkCannotLinkCOPKMeans(BaseKMeans):
-    def _cluster(self, X, n_clusters: int, constraint: MustLinkCannotLinkInstanceLevelClusteringConstraints, k_optimization: KOptimization, max_iter: int = 300, tol: float = 1e-4, random_state: int = 42):
-        must_link = constraint.must_link
-        cannot_link = constraint.cannot_link
-        labels, centers = cop_kmeans(X, k=n_clusters, ml=must_link, cl=cannot_link, max_iter=max_iter, tol=tol, random_state=random_state)
+    def __init__(self, ml_cl_constraint_mask: dict = {}) -> None:
+        super().__init__()
+        self.ml_cl_constraint_mask = ml_cl_constraint_mask
+
+    def _cluster(
+            self,
+            X, 
+            n_clusters: int, 
+            constraint: ClusteringConstraints, 
+            k_optimization: KOptimization,
+            tol: float = 1e-4, 
+            random_state: int = 42,
+            **kwargs
+        ):
+        must_link = constraint.must_link if self.ml_cl_constraint_mask.get('must_link', True) else []
+        cannot_link = constraint.cannot_link if self.ml_cl_constraint_mask.get('cannot_link', True) else []
+        labels, centers = cop_kmeans(X, k=n_clusters, ml=must_link, cl=cannot_link, tol=tol, random_state=random_state)
         score = k_optimization.score(X=X, labels=labels, centers=centers)
         return labels, None, score

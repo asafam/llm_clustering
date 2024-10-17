@@ -3,8 +3,11 @@ import pickle
 import boto3
 import logging
 from clustering.constraints_manager import ConstraintsType
+from embedding.models import TextEmbeddingModel
 from llms.utils import PromptType
 from enum import Enum
+import numpy as np
+from torch.utils.data import DataLoader
 import logging
 
 
@@ -44,6 +47,14 @@ def is_experiment_completed(experiments_results, excluded_keys = ['dataset'], **
         if all((item in filtered_experiment_args.items()) for item in filtered_args.items()):
             return True
     return False
+
+def get_experiment_results(experiments_results, excluded_keys = ['dataset'], **kwargs):
+    for experiment_results in experiments_results:
+        filtered_experiment_args = {key: get_experiment_results_item_value(value) for key, value in experiment_results.items() if key not in excluded_keys}
+        filtered_args = {key: get_experiment_results_item_value(value) for key, value in kwargs.items() if key not in excluded_keys}
+        if all((item in filtered_experiment_args.items()) for item in filtered_args.items()):
+            return experiment_results
+    return None
 
 
 def get_experiment_results_item_value(item):
@@ -91,9 +102,29 @@ def get_prompt_type(constraint_type: ConstraintsType) -> PromptType:
         return PromptType.FuzzyLabelsClusteringPrompt
     elif constraint_type == ConstraintsType.MustLinkCannotLinkConstraints:
         return PromptType.MustLinkCannotLinkClusteringPrompt
-    elif constraint_type == ConstraintsType.MustLinkCannotLinkViaHardLabelsExcludeUncertainConstraints:
-        return PromptType.HardLabelsClusteringExcludeUncertainPrompt
     elif constraint_type == ConstraintsType.KCountConstraint:
         return PromptType.KPredictNumberClusteringPrompt
     elif constraint_type == ConstraintsType.KNameConstraint:
         return PromptType.KPredictNameClusteringPrompt
+    
+
+def encode_dataset(
+        dataset,
+        model: TextEmbeddingModel,
+        batch_size: int = 128
+    ):
+     # embed the dataset for clustering
+    all_ids = []
+    all_embeddings = []
+    all_labels = []
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+    for batch_ids, batch_texts, batch_labels in dataloader:
+        batch_embeddings = model.embed(batch_texts)
+        all_embeddings.append(batch_embeddings)
+        all_labels.extend(batch_labels)
+        all_ids.extend(batch_ids)
+    X = np.vstack(all_embeddings)
+    labels_true = [tensor.item() for tensor in all_labels]
+    ids = [tensor.item() for tensor in all_ids]
+    
+    return X, ids, labels_true

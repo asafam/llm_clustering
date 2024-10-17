@@ -6,6 +6,9 @@ class BasePromptBuilder:
         self.prompt_type = prompt_type
         # Load the prompts
         self.template_prompts = load_prompts(prompt_type=prompt_type)
+
+    def __str__(self) -> str:
+        return self.__class__.__name__
         
     def build_prompt(self, step: int = 0, **kwargs):       
         # Select the prompt to build

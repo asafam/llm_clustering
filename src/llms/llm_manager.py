@@ -4,7 +4,10 @@ import os
 import importlib.util
 import inspect
 
-def get_prompt_builder(prompt_type: str, folder_path: str = os.path.join(os.getenv('LLM_CLUSTERING_BASE_DIR'), 'src/llms/prompt_builders')):
+def get_prompt_builder(
+        prompt_type: str, 
+        folder_path: str = os.path.join(os.getenv('LLM_CLUSTERING_BASE_DIR'), 'src/llms/prompt_builders')
+    ):
     """
     Loads all classes that are either BasePromptBuilder or extend it from the given folder, 
     instantiates them with the given prompt_type, checks if they match the prompt_type, 

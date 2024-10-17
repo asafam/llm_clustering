@@ -1,22 +1,19 @@
 from typing import *
 from datetime import datetime
-import inspect
 import traceback
 from torch.utils.data import DataLoader
-import pandas as pd
 import numpy as np
 from data import DatasetName, TextLabelDataset, load_dataset_by_name, sample_dataset, get_dataset_from_df
-from clustering.constraints_manager import ConstraintsType, KInformationType, generate_constraint
+from clustering.constraints_manager import ConstraintsType, KInformationType
 from clustering.constraints import *
 from clustering.models.base_models import ClusteringModel
 from clustering.optimizations import KOptimization
 from clustering.utils import evaluate_clustering
+from experiments.experiment_manager import *
+from experiments.utils import *
 from embedding.models import TextEmbeddingModel
 from llms.models import LLM
-from llms.llm_manager import get_prompt_builder
 from llms.utils import PromptType, generate_prompt, get_formatter
-from experiments.constrained_models import BaseConstrainedLLM
-from experiments.utils import *
 import logging
 
 
@@ -205,6 +202,8 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
             llm_k_information_type: KInformationType = KInformationType.UnknownK,
             cluster_k_information_type: KInformationType = KInformationType.UnknownK,
             k_optimization: Optional[KOptimization] = None,
+            dataset_k: Optional[int] = None,
+            constraint: Optional[ClusteringConstraints] = None,
             min_clusters: int = 2,
             max_clusters: int = 10,
             min_cluster_size: int = 0,
@@ -215,64 +214,70 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
         start_datetime = datetime.now()
         logger = logging.getLogger('default')
 
-        # get data
+        # Load the dataset
+        start_datetime2 = datetime.now()
         dataset = load_dataset_by_name(dataset_name=dataset_name)
+        if dataset_k is not None:
+            sample_df = sample_dataset(dataset=dataset, k=dataset_k, random_state=random_state)
+            dataset = get_dataset_from_df(sample_df)
+        logger.debug(f"Dataset loading completed in {(datetime.now() - start_datetime2).total_seconds()} seconds")
 
-        # sample subset
-        k = 0 if llm_k_information_type == KInformationType.GroundTruthK else None
-        sample_df = sample_dataset(dataset=dataset, n=sample_n, k=k, min_cluster_size=min_cluster_size, random_state=random_state)
+        # Create the constraint
+        if constraint is None:
+            start_datetime2 = datetime.now()
+            k = 0 if llm_k_information_type == KInformationType.GroundTruthK else None
+            constraint_results = create_constraint(
+                dataset,
+                sample_n,
+                llm,
+                constraint_type,
+                prompt_type,
+                k,
+                min_cluster_size,
+                random_state,
+                **kwargs
+            )
+            constraint = constraint_results['constraint']
+            logger.debug(f"Constraint evaluation returned {constraint_results['constraint_quality']}")
+            logger.debug(f"Constraint creation completed in {(datetime.now() - start_datetime2).total_seconds()} seconds")
+        else:
+            constraint_results = {'constraint': constraint}
+            logger.debug("Constraing provided in parameters. No need to create it.")
 
-        # run the LLM predictions to create the constraints
-        sample_ids = sample_df['id'].tolist()
-        sample_texts = sample_df['text'].tolist()
-        sample_labels = sample_df['label'].tolist()
-        constraint_model = BaseConstrainedLLM(llm=llm, constraint_type=constraint_type)
-        k = len(set(sample_labels)) if llm_k_information_type == KInformationType.GroundTruthK else None
-        constraint_result = constraint_model.create_constraint(prompt_type=prompt_type, ids=sample_ids, texts=sample_texts, labels=sample_labels, k=k, **kwargs)
-        constraint = constraint_result.get('constraint')
+        # Get the dataset embeddings for clustering
+        start_datetime2 = datetime.now()
+        X, ids, labels_true = encode_dataset(dataset=dataset, model=text_embedding_model, batch_size=batch_size)
+        logger.debug(f"Dataset embedding completed in {(datetime.now() - start_datetime2).total_seconds()} seconds")
 
-        # embed the dataset for clustering
-        all_ids = []
-        all_embeddings = []
-        all_labels = []
-        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
-        for batch_ids, batch_texts, batch_labels in dataloader:
-            batch_embeddings = text_embedding_model.embed(batch_texts)
-            all_embeddings.append(batch_embeddings)
-            all_labels.extend(batch_labels)
-            all_ids.extend(batch_ids)
-        X = np.vstack(all_embeddings)
-        labels_true = [tensor.item() for tensor in all_labels]
-        
         # Cluster the dataset using the constraint
-        if cluster_k_information_type == KInformationType.UnknownK:
-            # If number of clusters is unknown then optimize it
-            max_k = max(max_clusters, len(constraint.get_labels()))
-            cluster_results = clustering_model.cluster(X, constraint=constraint, k_optimization=k_optimization, min_k=min_clusters, max_k=max_k, random_state=random_state)
-        elif cluster_k_information_type == KInformationType.GroundTruthK:
-            # Otherwise, provide the true cluster number to the clustering model
-            n_clusters = len(set(labels_true))
-            cluster_results = clustering_model.cluster(X, constraint=constraint,  k_optimization=k_optimization, n_clusters=n_clusters, random_state=random_state)
-        elif cluster_k_information_type == KInformationType.OracleK:
-            # Or else, provide the predicted cluster number (if we can extract it from the constraint) to the clustering model
-            if constraint.labels is None:
-                logger.error(f"No labels were correctly predicted running with constraint {constraint_type.value}")
-            else:
-                labels_oracle_pred = constraint.labels
-                n_clusters = len(set(labels_oracle_pred))
-                cluster_results = clustering_model.cluster(X, constraint=constraint,  k_optimization=k_optimization, n_clusters=n_clusters, random_state=random_state)
-        
+        start_datetime2 = datetime.now()
+        cluster_results = cluster_with_constraint(
+            X,
+            ids,
+            labels_true,
+            constraint,
+            clustering_model,
+            cluster_k_information_type,
+            k_optimization,
+            min_clusters,
+            max_clusters,
+            random_state,
+            **kwargs
+        )
         labels_pred = cluster_results['labels']
+        logger.debug(f"Clustering completed in {(datetime.now() - start_datetime2).total_seconds()} seconds")
 
         # Compute score for the clustering
         scores = evaluate_clustering(labels_pred=labels_pred, labels_true=labels_true, X=X)
 
+        # Prepare the results 
         results = dict(
+            ids=ids,
             labels_true=labels_true,
             labels_pred=labels_pred,
             X=X,
         )
-        results.update(constraint_result)
+        results.update(constraint_results)
         results.update(scores)
 
         end_datetime = datetime.now()
@@ -281,6 +286,7 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
             end_datetime=end_datetime.strftime("%Y-%m-%d %H:%M:%S"),
             time_in_seconds=(end_datetime - start_datetime).total_seconds()
         ))
+        logger.debug(f"Experiment completed in {(end_datetime - start_datetime).total_seconds()} seconds")
 
         return results
 
@@ -304,65 +310,22 @@ class LLMConstraintedClusteringQualityExperiment(BaseExperiment):
         # get data
         dataset = load_dataset_by_name(dataset_name=dataset_name)
 
-        ids = []
-        labels_true = []
-        
-        prompt_type = prompt_type or get_prompt_type(constraint_type=constraint_type)
-        prompt_builder = get_prompt_builder(prompt_type=prompt_type)
-        messages = []
-        data = None
-        for step in range(prompt_builder.get_steps_count()):
-            # sample subset
-            n = sample_n[min(step, len(sample_n) - 1)] if type(sample_n) == list else sample_n
-            sample_df = sample_dataset(dataset=dataset, n=n, k=k, min_cluster_size=min_cluster_size, exclude_ids=ids, random_state=(random_state + step * 1000))
-            sample_ids = sample_df['id'].tolist()
-            sample_texts = sample_df['text'].tolist()
-            sample_labels = sample_df['label'].tolist()
-
-            ids += sample_ids
-            labels_true += sample_labels
-            # run the LLM predictions to create the constraints
-
-            # Generate the prompt
-            prompt = prompt_builder.build_prompt(step=step, context=data, ids=sample_ids, texts=sample_texts, **kwargs) # Build the prompt
-
-            # Send prompt to LLM
-            messages += [
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
-            data_raw, data_raw_text = llm.create_messages(messages=messages) # Call the LLM with the prompt
-            messages += [
-                {
-                    "role": "assistant",
-                    "content": data_raw_text
-                }
-            ]
-            # Format the output
-            format_func = get_formatter(prompt_type=prompt_type, step=step)
-            data = format_func(data_raw, context=data) if format_func else data_raw
-
-
-        # Generate the constraints
-        constraint = generate_constraint(data=data, constraint_type=constraint_type, ids=sample_ids, texts=sample_texts, labels=sample_labels, **kwargs)
-        constraint_quality = constraint.evaluate(ids_true=ids, labels_true=labels_true)
-        logger.debug(f"Constraint evaluation returned {constraint_quality}")
-        constraint_result = dict(
-            constraint=constraint,
-            prompt=prompt,
-            constraint_quality = constraint_quality
+        constraint_model = BaseConstrainedLLM()
+        constraint_results = constraint_model.create_constraint(
+            dataset,
+            sample_n,
+            llm,
+            constraint_type,
+            prompt_type,
+            k,
+            min_cluster_size,
+            random_state,
+            **kwargs
         )
-
-        # Build the result
-        results = dict(
-            ids=ids,
-            labels_true=labels_true
-        )
-        results.update(constraint_result)
+        logger.debug(f"Constraint evaluation returned {constraint_results['constraint_quality']}")
 
         end_datetime = datetime.now()
+        results = constraint_results
         results.update(dict(
             start_datetime=start_datetime.strftime("%Y-%m-%d %H:%M:%S"),
             end_datetime=end_datetime.strftime("%Y-%m-%d %H:%M:%S"),

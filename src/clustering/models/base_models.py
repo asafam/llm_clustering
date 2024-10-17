@@ -4,9 +4,9 @@ from datetime import datetime
 from sklearn.cluster import KMeans
 from clustering.constraints import *
 from clustering.optimizations import KOptimization
+from tqdm.notebook import tqdm
 import logging
-
-
+import math
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -19,12 +19,13 @@ class ClusteringModel:
     
     def __str__(self) -> str:
         return self.__class__.__name__
+    
 
-
-class BaseKMeans(ClusteringModel):
+class KHyperparamClusteringModel(ClusteringModel):
     def cluster(
             self, 
             X,
+            ids: list,
             k_optimization: KOptimization, 
             n_clusters: Optional[int] = None,
             min_k: int = 2,
@@ -53,14 +54,16 @@ class BaseKMeans(ClusteringModel):
         best_score: float
             The score corresponding to the best k.
         """
-        k_labels = [] # Store the iteration results
-        
         logger = logging.getLogger('default')
+        logger.info(f"Clustering model: {type(self).__name__}")
+
+        k_labels = [] # Store the iteration results
 
         if n_clusters:
             logger.debug(f"Clustering with n_clusters = {n_clusters}")
             start_datetime = datetime.now()
-            labels, kmeans, score = self._cluster(X, n_clusters=n_clusters, k_optimization=k_optimization, random_state=random_state, **kwargs)
+            labels = self._cluster(X, ids=ids, n_clusters=n_clusters, random_state=random_state, **kwargs)
+            score = k_optimization.score(X, labels)
             end_datetime = datetime.now()
             elapsed_seconds = (end_datetime - start_datetime).total_seconds()
             k_labels.append(dict(
@@ -79,7 +82,7 @@ class BaseKMeans(ClusteringModel):
                 n_clusters=n_clusters,
                 index=0,
                 k_labels=k_labels
-            ) 
+            )
         
         # Find the best k in the coarse search
         # Coarse search over a large range
@@ -87,7 +90,8 @@ class BaseKMeans(ClusteringModel):
         coarse_k_values = range(min_k, max_k + 1, k_optimization_coarse_step_size)  # Every 10th value
         for k in coarse_k_values:
             k_start_datetime = datetime.now()
-            labels, kmeans, score = self._cluster(X, n_clusters=k, k_optimization=k_optimization, random_state=random_state, **kwargs)
+            labels = self._cluster(X, ids=ids, n_clusters=k, random_state=random_state, **kwargs)
+            score = k_optimization.score(X, labels)
             k_end_datetime = datetime.now()
             elapsed_seconds=(k_end_datetime - k_start_datetime).total_seconds()
             logger.debug(f"Optimizing clustering for k = {k} returned a score of {score} after {elapsed_seconds} seconds")
@@ -96,7 +100,7 @@ class BaseKMeans(ClusteringModel):
                 labels=labels,
                 score=score,
                 k_optimization=str(k_optimization),
-                wcss=kmeans.inertia_,
+                wcss=compute_inertia(X, labels),
                 mode='coarse',
                 start_datetime=k_start_datetime,
                 end_datetime=k_end_datetime,
@@ -113,7 +117,8 @@ class BaseKMeans(ClusteringModel):
             fine_k_values = range(max(min_k, best_k - k_optimization_fine_range + 1), min(max_k, best_k + k_optimization_fine_range))  # ±k_optimization_fine_range around best coarse k
 
             for k in fine_k_values:
-                labels, kmeans, score = self._cluster(X, n_clusters=k, random_state=random_state, k_optimization=k_optimization, **kwargs)
+                labels = self._cluster(X, ids=ids, n_clusters=k, random_state=random_state, **kwargs)
+                score = k_optimization.score(X, labels)
                 elapsed_seconds=(k_end_datetime - k_start_datetime).total_seconds()
                 logger.debug(f"Optimizing clustering for k = {k} returned a score of {score} after {elapsed_seconds} seconds")
                 k_labels.append(dict(
@@ -121,7 +126,7 @@ class BaseKMeans(ClusteringModel):
                     labels=labels,
                     score=score,
                     k_optimization=str(k_optimization),
-                    wcss=kmeans.inertia_,
+                    wcss=compute_inertia(X, labels),
                     mode='fine',
                     start_datetime=k_start_datetime,
                     end_datetime=k_end_datetime,
@@ -143,18 +148,23 @@ class BaseKMeans(ClusteringModel):
             k_labels=k_labels
         )
     
-    def _cluster(self, X, n_clusters: int, k_optimization: KOptimization, random_state: int, max_iter: int = 300):
-        best_score = -float.inf
-        kmeans = None
-        labels = None
-        for i in range(max_iter):
-            kmeans_ = KMeans(n_clusters=n_clusters, random_state=random_state + i)
-            labels_ = kmeans_.fit_predict(X)
-            score = k_optimization.score(X, labels_)
-
-            if score > best_score:
-                best_score = score
-                kmeans = kmeans_
-                labels = labels_
+    def _cluster(self, **kwargs):
+        raise NotImplementedError()
+    
+    
+class BaseKMeans(KHyperparamClusteringModel):
+    
+    def _cluster(
+            self, 
+            X, 
+            ids: list,
+            n_clusters: int, 
+            random_state: int, 
+            n_init: int = 1, 
+            verbose: bool = True,
+            **kwargs
+        ):
+        kmeans = KMeans(n_clusters=n_clusters, n_init=n_init, random_state=random_state, verbose=verbose)
+        labels = kmeans.fit_predict(X)
         
-        return labels, kmeans, score
+        return labels

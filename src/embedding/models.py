@@ -16,6 +16,14 @@ class EmbeddingModelName(Enum):
 
 
 class TextEmbeddingModel:
+    _instance = None  # Class variable to hold the singleton instance
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            # If no instance exists, create a new one
+            cls._instance = super().__new__(cls)
+        return cls._instance
+    
     def embed(self, texts):
         raise NotImplementedError()
     
@@ -25,13 +33,17 @@ class TextEmbeddingModel:
 
 class UniversalTextEmbeddingModel(TextEmbeddingModel):
     def __init__(self, model_name: EmbeddingModelName) -> None:
-        super().__init__()
-        self.model_name = model_name
-        logger = logging.getLogger('default')
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        logger.debug(f"Loading UniversalTextEmbeddingModel {model_name.value}")
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name.value, force_download=False)
-        self.model = AutoModel.from_pretrained(model_name.value, trust_remote_code=True, force_download=False).to(self.device)
+        # Only initialize once (check if already initialized)
+        if not hasattr(self, '_initialized'):
+            super().__init__()
+            self.model_name = model_name
+            logger = logging.getLogger('default')
+            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            logger.debug(f"Loading UniversalTextEmbeddingModel {model_name.value}")
+            self.tokenizer = AutoTokenizer.from_pretrained(model_name.value, force_download=False)
+            self.model = AutoModel.from_pretrained(model_name.value, trust_remote_code=True, force_download=False).to(self.device)
+            self._initialized = True  # Mark this instance as initialized
+
     
     def __str__(self) -> str:
         return f"{self.__class__.__name__}(model_name={self.model_name.value})"

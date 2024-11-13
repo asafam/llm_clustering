@@ -20,18 +20,23 @@ class Claude(LLM):
     def __str__(self) -> str:
         return f"{self.__class__.__name__}(model={self.model}, aws_region={self.aws_region})"
 
-    def create_messages(self, messages: list, max_tokens: int = 4096, temperature=0):
+    def create_messages(self, messages: list, system_prompt: str = None, max_tokens: int = 4096, temperature=0):
         logger = logging.getLogger('default')
         client = AnthropicBedrock(
             aws_region=self.aws_region,
         )
 
-        response = client.messages.create(
-            model=self.model,
-            max_tokens=max_tokens,
-            temperature=temperature,
-            messages=messages
-        )
+        try:
+            response = client.messages.create(
+                model=self.model,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                system=system_prompt,
+                messages=messages
+            )
+        except Exception as e:
+            print(f"LLM Failed when prompted:\n{messages}")
+            raise e
 
         data_text = response.content[0].text
         logger.debug(f"LLM returned message (usage statistics: {response.usage})")

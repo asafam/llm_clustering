@@ -10,6 +10,8 @@ class PromptType(Enum):
     SimpleClusteringPrompt2 = 'simple_clustering_prompt1_1'
     HardLabelsClusteringPrompt = 'hard_labels_clustering_prompt'
     MultiStepHardLabelsClusteringPrompt = 'hard_labels_clustering_multi_step_prompt'
+    MultiStepHardLabelsClusteringPrompt2 = 'hard_labels_clustering_multi_step_prompt2'
+    MultiStepHardLabelsClusteringPrompt3 = 'hard_labels_clustering_multi_step_prompt3'
     HardLabelsClusteringCoTPrompt = 'hard_labels_clustering_prompt_cot'
     HardLabelsClusteringExcludeUncertainPrompt = 'hard_labels_clustering_exclude_uncertain_prompt'
     FuzzyLabelsClusteringPrompt = 'fuzzy_labels_clustering_prompt'
@@ -18,13 +20,11 @@ class PromptType(Enum):
     KPredictNumberClusteringPrompt = 'k_predict_number_clustering_prompt'
 
 def load_prompts(prompt_type: PromptType):
-    logger = logging.getLogger('default')
-
     # Load the YAML file
     prompt_file = os.path.join(os.getenv('LLM_CLUSTERING_BASE_DIR', ''), 'prompts', f'{prompt_type.value}.yaml')
     with open(prompt_file, 'r') as file:
         data = yaml.safe_load(file)
-        template_prompts = list(map(lambda d: d['prompt'], data))
+        template_prompts = list(map(lambda d: dict(system_prompt=d.get('system_prompt'), user_prompt=d.get('user_prompt')), data))
 
     return template_prompts
 
@@ -60,10 +60,13 @@ def generate_prompt(prompt_type: PromptType, **kwargs):
 def get_formatter(prompt_type: PromptType, step: int = 0) -> Callable:
     if prompt_type in [
         PromptType.SimpleClusteringPrompt, PromptType.HardLabelsClusteringPrompt, PromptType.HardLabelsClusteringCoTPrompt, 
-        PromptType.HardLabelsClusteringExcludeUncertainPrompt, PromptType.MultiStepHardLabelsClusteringPrompt
+        PromptType.HardLabelsClusteringExcludeUncertainPrompt, PromptType.MultiStepHardLabelsClusteringPrompt, 
+        PromptType.MultiStepHardLabelsClusteringPrompt2, PromptType.MultiStepHardLabelsClusteringPrompt3
         ]:
         return format_response_as_dictionary_of_sentences
-    elif prompt_type == PromptType.SimpleClusteringPrompt2:
+    elif prompt_type in [
+        PromptType.SimpleClusteringPrompt2
+    ]:
         return format_response_as_dictionary_of_clusters
     elif prompt_type == PromptType.MustLinkCannotLinkClusteringPrompt:
         return format_response_as_must_link_cannot_link
@@ -86,8 +89,10 @@ def format_response_as_dictionary_of_sentences(data: dict, context: Optional[dic
     sentences_labels = context.get('sentences_labels', {}) if context else {}
     for sid, label in data['result'].items():
         sentences_labels[sid] = label
+    
+    explanations = data.get('explanations')
 
-    return dict(sentences_labels=sentences_labels)
+    return dict(sentences_labels=sentences_labels, explanations=explanations)
 
 
 def format_response_as_must_link_cannot_link(data: dict, **kwargs):

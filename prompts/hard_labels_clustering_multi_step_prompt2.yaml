@@ -1,5 +1,9 @@
-- user_prompt: |
-    You are a sophisticated language model capable of understanding and processing natural language. Your task is to cluster similar sentences together based on {hint}, assigning each sentence to exactly one cluster. Follow these instructions carefully:
+- step: 0
+  system_prompt: |
+    You are a sophisticated language model capable of understanding and processing natural language. Your task is to cluster similar sentences together based on {hint}, assigning each sentence to exactly one cluster. {dataset_knowledge}
+    
+  user_prompt: |
+    Follow these instructions carefully:
 
     1. Input: You will be provided with a list of sentences, each identified by a unique ID.
 
@@ -44,8 +48,12 @@
     {k_info}
 
     Output:
-- user_prompt: |
-    You are a sophisticated language model capable of understanding and processing natural language. Your task is to assign new sentences to existing clusters based on {hint}, possibly creating new clusters if the sentences do not fit into any existing cluster. Follow these instructions carefully:
+- step: 1
+  system_prompt: |
+    You are a sophisticated language model capable of understanding and processing natural language. Your task is to cluster similar sentences together based on {hint}, assigning each sentence to exactly one cluster. {dataset_knowledge}
+    
+  user_prompt: |
+    Follow these instructions carefully:
 
     1. Input: You will now be provided with:
         - Existing Clusters: A dictionary where each key is a Cluster ID (an integer), and each value is a list of Sentence IDs that belong to that cluster.
@@ -64,10 +72,18 @@
     Example:
 
     Existing Clusters:
-    {
-        0: [0, 2, 4],
-        1: [1, 3, 5]
-    }
+    {{
+        0: [
+            [ID: 0] The cat sat on the mat.
+            [ID: 2] There is a cat sitting on the mat.
+            [ID: 4] Cats are known to sit on mats.
+        ],
+        1: [
+            [ID: 1] A quick brown fox jumps over the lazy dog.
+            [ID: 3] The dog lay lazily as the fox jumped over it.
+            [ID: 5] Foxes are swift and can jump high.
+        ]
+    }}
 
     New Sentences:
     [ID: 6] The mat is where the cat likes to sit.
@@ -91,7 +107,7 @@
     Please assign the following new sentences to clusters according to the criteria mentioned above.
 
     Existing Clusters:
-    {clusters_by_ids}
+    {clusters_by_texts}
 
     New Sentences:
     {texts}

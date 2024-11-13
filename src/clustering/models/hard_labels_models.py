@@ -1,7 +1,8 @@
 from typing import *
 import numpy as np
 from datetime import datetime
-from metric_learn import ITML_Supervised
+import random
+from metric_learn import ITML_Supervised, MMC_Supervised
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from clustering.constraints import *
@@ -16,7 +17,7 @@ class HardLabelsKMeans(KHyperparamClusteringModel):
         self.enforce_labels = enforce_labels
 
     def _cluster(self, X, ids: list, n_clusters: int, constraint: HardLabelsClusteringContraints, k_optimization: KOptimization, max_iter: int = 300, tol: float = 1e-4, random_state: int = 42):
-        hard_labels = constraint.sentences_labels
+        hard_labels = constraint.get_ids_labels()
         labels, centroids = self._hard_constrained_kmeans(
             X=X,
             hard_labels=hard_labels, 
@@ -26,7 +27,7 @@ class HardLabelsKMeans(KHyperparamClusteringModel):
             tol=tol,
             random_state=random_state
         )
-        return labels
+        return labels, centroids
 
     def _hard_constrained_kmeans(self, X, hard_labels: dict, n_clusters: int, k_optimization: KOptimization, max_iter: int = 300, tol: float = 1e-4, random_state: int = 42):
         n_samples, n_features = X.shape
@@ -114,38 +115,61 @@ class HardLabelsCentroidsKMeans(KHyperparamClusteringModel):
     def _cluster(
             self, 
             X, 
-            ids: list,
             n_clusters: int, 
             constraint: HardLabelsClusteringContraints, 
-            n_init: int = 300, 
-            tol: float = 1e-4, 
             random_state: int = 42,
-            verbose: bool = True,
+            verbose: bool = False,
             **kwargs
         ):
-        sentences_labels = constraint.sentences_labels
+        sentences_labels = constraint.get_ids_labels()
+        embeddings = np.vstack([X[id] for id in sentences_labels.keys()])
         labels = list(sentences_labels.values())
-        centroids = compute_centroids(X, labels)
-        kmeans = KMeans(n_clusters=n_clusters, init=centroids, n_init=n_init, random_state=random_state, verbose=verbose)
+        centroids = compute_centroids(embeddings, labels)
+        kmeans = KMeans(n_clusters=n_clusters, init=centroids, random_state=random_state, verbose=verbose)
         labels = kmeans.fit_predict(X)
+        return labels, centroids
+    
 
-        return labels
-
+class HardLabelsCentroidsSubstitutionKMeans(KHyperparamClusteringModel):
+    def _cluster(
+            self, 
+            X, 
+            n_clusters: int, 
+            constraint: HardLabelsClusteringContraints, 
+            random_state: int = 42,
+            verbose: bool = False,
+            **kwargs
+        ):
+        sentences_labels = constraint.get_ids_labels()
+        labels = list(sentences_labels.values())
+        X_centroid_reduced, ids_map = create_centroid_reduced_X(X, constraint.get_ids_labels())
+        kmeans = KMeans(n_clusters=n_clusters, random_state=random_state, verbose=verbose)
+        labels_centroid_reduced = kmeans.fit_predict(X_centroid_reduced)
+        labels = [labels_centroid_reduced[ids_map[i]] for i in range(X.shape[0])]
+        centroids = kmeans.cluster_centers_
+        return labels, centroids
+    
 
 class HardLabelsMahalanobisKMeans(KHyperparamClusteringModel):
-    def __init__(self, n_constraints: int) -> None:
+    def __init__(self, n_constraints: int, algo: str) -> None:
         super().__init__()
         self.n_constraints = n_constraints
+        self.algo = algo or 'MMC'
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}(n_constraints={self.n_constraints})"
+        return f"{self.__class__.__name__}(n_constraints={self.n_constraints}, algo={self.algo})"
 
-    def _cluster(self, X, ids: list, n_clusters: int, constraint: HardLabelsClusteringContraints, random_state: int = 42, **kwargs):
+    def _cluster(self, 
+                 X, 
+                 ids: list, 
+                 n_clusters: int, 
+                 constraint: HardLabelsClusteringContraints, 
+                 random_state: int = 42, 
+                 verbose: bool = False, 
+                 **kwargs):
         # Labels for the labeled data (-1 for unlabeled points)
         labels_pred_map = {id: -1 for id in ids}
-        print("ids = ", ids)
-        print("sentences_labels = ", constraint.sentences_labels)
-        for id, label in list(constraint.sentences_labels.items()):
+        for id, label in list(constraint.get_ids_labels().items()):
             if id in labels_pred_map:
                 labels_pred_map[id] = label
             else:
@@ -159,17 +183,34 @@ class HardLabelsMahalanobisKMeans(KHyperparamClusteringModel):
         # Step 2: Standardize the data (applies to both labeled and unlabeled points)
         scaler = StandardScaler()
         X_scaled = scaler.fit_transform(X)  # Fit on all data
+        X_constraints = X_scaled[labeled_mask]
+
+        # Sample hard labels constraints
+        n_constraints = len(X_constraints) if (self.n_constraints == 0 or self.n_constraints > len(X_constraints)) else self.n_constraints
+        if len(X_constraints) < n_constraints:
+            random.seed(random_state)
+            indices = random.sample(range(len(y_labeled)), n_constraints)
+            X_constraints = X_constraints[indices, :]
+            y_labeled = [y_labeled[i] for i in indices]
 
         # Step 3: Learn the Mahalanobis distance using only the labeled data
-        n_constraints = len(constraint.must_link) if self.n_constraints == 0 else self.n_constraints
-        itml = ITML_Supervised(n_constraints=n_constraints, verbose=True)
-        itml.fit(X_scaled[labeled_mask], y_labeled)
+        if self.algo == 'ITML':
+            model = ITML_Supervised(n_constraints=n_constraints, verbose=verbose, random_state=random_state)
+        elif self.algo == 'MMC':
+            model = MMC_Supervised(n_constraints=n_constraints, verbose=verbose, random_state=random_state)
+        else:
+            raise ValueError("No valid Mahalanobix approximation algorithm was specified. Value provided: {self.algo}")
+
+        model.fit(X_constraints, y_labeled)
 
         # Step 4: Transform the entire dataset (including unlabeled points)
-        X_transformed = itml.transform(X_scaled)
+        X_transformed = model.transform(X_scaled)
 
         # Step 5: Perform KMeans clustering on the transformed data
         kmeans = KMeans(n_clusters=n_clusters, random_state=random_state)
         labels = kmeans.fit_predict(X_transformed)
 
-        return labels
+        # Get the centroids 
+        centroids = kmeans.cluster_centers_
+
+        return labels, centroids

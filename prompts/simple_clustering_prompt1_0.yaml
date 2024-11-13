@@ -1,4 +1,4 @@
-- prompt: |
+- user_prompt: |
     You are a sophisticated language model capable of understanding and processing natural language. Your task is to cluster similar sentences together based on {hint}, assigning each sentence to exactly one cluster. Follow these instructions carefully:
 
     1. Input: You will be provided with a list of sentences, each identified by a unique ID.

@@ -1,0 +1,129 @@
+- step: 0
+  system_prompt: |
+    You are a sophisticated language model capable of understanding and processing natural language. Your task is to cluster similar sentences together based on {hint}, assigning each sentence to exactly one cluster. {dataset_knowledge}
+    
+  user_prompt: |
+    <example>
+    Input:
+    [ID: 0] The cat sat on the mat.
+    [ID: 1] A quick brown fox jumps over the lazy dog.
+    [ID: 2] There is a cat sitting on the mat.
+    [ID: 3] The dog lay lazily as the fox jumped over it.
+    [ID: 4] Cats are known to sit on mats.
+    [ID: 5] Canines are swift and can leap high.
+
+    Output:
+    {{
+        "result": {{
+            0: 0,
+            1: 1,
+            2: 0,
+            3: 1,
+            4: 0,
+            5: 1
+        }},
+        "explanations": {{
+            0: "Sentences about cats sitting on mats.",
+            1: "Sentences about dogs jumping."
+        }}
+    }}
+    </example>
+
+    Follow these instructions carefully:
+
+    1. Input: You will be provided with a list of sentences, each identified by a unique ID.
+
+    2. Clustering Criteria:
+        - Semantic Similarity: Group sentences that convey similar meanings, even if they use different words or structures.
+        - Contextual Relevance: Sentences should be in the same cluster if they are relevant to the same topic or idea.
+        - Paraphrasing: Sentences that are paraphrases of each other -- even if they contain different details -- should be clustered together.
+        - When unsure, prefer assigning sentences to an existing cluster instead of creating a new one, to avoid over-segmentation.
+
+    3. Output:
+        - Output your response in a JSON format.
+        - Return a dictionary where each key is a sentence ID (represented as an integer)
+        - Each value is the cluster ID that the sentence belongs to.
+        - Additionally, provide explanations or names for any new clusters created, describing the theme or idea represented by each cluster.
+
+    Please cluster the sentence IDs below according to the criteria mentioned above.
+
+    Sentences for Clustering:
+    {texts}
+
+    {k_info}
+
+    Output:
+- step: 1
+  system_prompt: |
+    You are a sophisticated language model capable of understanding and processing natural language. Your task is to cluster similar sentences together based on {hint}, assigning each sentence to exactly one cluster. {dataset_knowledge}
+    
+  user_prompt: |
+    <example>
+    Existing Clusters:
+    {{
+        0: [
+            [ID: 0] The cat sat on the mat.
+            [ID: 2] There is a cat sitting on the mat.
+            [ID: 4] Cats are known to sit on mats.
+        ],
+        1: [
+            [ID: 1] A quick brown fox jumps over the lazy dog.
+            [ID: 3] The dog lay lazily as the fox jumped over it.
+            [ID: 5] Foxes are swift and can jump high.
+        ]
+    }}
+
+    New Sentences:
+    [ID: 6] The mat is where the cat likes to sit.
+    [ID: 7] Dogs sometimes jump over fences.
+    [ID: 8] Foxes are clever animals.
+
+    Output:
+    {{
+        "result": {{
+            6: 0,
+            7: 1,
+            8: 2
+        }},
+        "explanations": {{
+            0: "Sentences about cats sitting on mats.",
+            1: "Sentences about dogs jumping."
+            2: "Sentences about foxes and their cleverness."
+        }}
+    }}
+
+    Explanation:
+    - Sentence 6 is similar to sentences in Cluster 0 (about cats and mats).
+    - Sentence 7 relates to Cluster 1 (about dogs and jumping).
+    - Sentence 8 doesn't fit into any existing cluster, so a new Cluster 2 is created.
+    </example>
+
+    Follow these instructions carefully:
+
+    1. Input: You will now be provided with:
+        - Existing Clusters: A dictionary where each key is a Cluster ID (an integer), and each value is a list of Sentence IDs that belong to that cluster.
+        - New Sentences: A list of sentences, each identified by a unique Sentence ID.
+
+    2. Clustering Criteria:
+        - Use the same clustering instructions from before.
+        - Preference for Existing Clusters: When unsure, prefer assigning sentences to an existing cluster instead of creating a new one, to avoid over-segmentation.
+
+    3. Output:
+        - Output your response in a JSON format.
+        - Return a dictionary where each key is a Sentence ID (represented as an integer).
+        - Each value is the Cluster ID that the sentence belongs to.
+        - Use existing Cluster IDs when assigning sentences to existing clusters. If creating a new cluster, assign it a new unique Cluster ID (e.g., the next integer after the highest existing Cluster ID).
+        - Additionally, provide explanations or names for any new clusters created, describing the theme or idea represented by each cluster.
+
+    Please assign the following new sentences to clusters according to the criteria mentioned above.
+
+    Existing Clusters:
+    {clusters_by_texts}
+
+    Explanations:
+    {explanations}
+
+    New Sentences:
+    {texts}
+
+    Output:

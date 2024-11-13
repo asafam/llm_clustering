@@ -16,8 +16,8 @@ class SilhouetteKOptimization(KOptimization):
     
 
 class InteriaMinimizationKOptimization(KOptimization):    
-    def score(self, X, labels, centers) -> int:
+    def score(self, X, labels, centroids, **kwargs) -> int:
         score = -sum(
-              distance.euclidean(X[i], centers[labels[i]]) for i in range(X.shape[0])
+              distance.euclidean(X[i], centroids[labels[i]]) for i in range(X.shape[0])
         )
         return score

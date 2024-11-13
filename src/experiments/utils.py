@@ -1,3 +1,4 @@
+from typing import *
 import os
 import pickle
 import boto3
@@ -65,13 +66,20 @@ def get_experiment_results_item_value(item):
         return str(item)
 
 
-def setup_logger(file_path: str):
+def setup_logger(file_path: str, worker_id: Optional[None] = None):
     # Create or retrieve the logger
     logger = logging.getLogger('default')
     
-    # Remove all existing handlers
-    if logger.hasHandlers():
-        logger.handlers.clear()
+    # Check if a handler with the given file_path already exists
+    file_handler_exists = any(
+        isinstance(handler, logging.FileHandler) and handler.baseFilename == os.path.abspath(file_path)
+        for handler in logger.handlers
+    )
+
+    # Only add a new FileHandler if none exists for this file_path
+    if file_handler_exists:
+        logger.debug(f"Re-using logger writing to {file_path}")
+        return logger
     
     logger.setLevel(logging.DEBUG)
     logger.propagate = False
@@ -79,7 +87,10 @@ def setup_logger(file_path: str):
     # Stream Handler (for console output)
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    if worker_id is not None:
+        log_format = f"[Worker %(process)d] {log_format}"
+    formatter = logging.Formatter(log_format)
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
 
@@ -90,6 +101,8 @@ def setup_logger(file_path: str):
     file_handler.setFormatter(formatter) # Use the same formatter
     logger.addHandler(file_handler)
     
+    logger.debug(f"Creating a new logger writing to {file_path}")
+
     return logger
 
 
@@ -110,21 +123,57 @@ def get_prompt_type(constraint_type: ConstraintsType) -> PromptType:
 
 def encode_dataset(
         dataset,
-        model: TextEmbeddingModel,
+        model: Optional[TextEmbeddingModel],
+        file_path: Optional[str],
         batch_size: int = 128
     ):
      # embed the dataset for clustering
     all_ids = []
     all_embeddings = []
     all_labels = []
+
+    embeddings = None
+    if file_path is not None:
+        embeddings = np.load(file_path)
+
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
     for batch_ids, batch_texts, batch_labels in dataloader:
-        batch_embeddings = model.embed(batch_texts)
-        all_embeddings.append(batch_embeddings)
         all_labels.extend(batch_labels)
         all_ids.extend(batch_ids)
+        if embeddings is not None:
+            all_embeddings.append(embeddings[batch_ids])
+        else:
+            batch_embeddings = model.embed(batch_texts)
+            all_embeddings.append(batch_embeddings)
     X = np.vstack(all_embeddings)
     labels_true = [tensor.item() for tensor in all_labels]
     ids = [tensor.item() for tensor in all_ids]
     
     return X, ids, labels_true
+
+
+def serialize_dataset_embeddings(
+        dataset,
+        model: TextEmbeddingModel,
+        file_path: str,
+        batch_size: int = 128
+):
+    # Initialize an empty list to store all embeddings from each batch
+    all_embeddings = []
+
+    # Create a DataLoader for the dataset, specifying batch size and no shuffling
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+
+    # Iterate over each batch in the DataLoader
+    for _, batch_texts, _ in dataloader:
+        # Generate embeddings for the current batch of texts
+        batch_embeddings = model.embed(batch_texts)
+        all_embeddings.append(batch_embeddings)
+
+    # Stack all batch embeddings vertically to form a single numpy array
+    X = np.vstack(all_embeddings)
+
+    # Save the final embeddings matrix to the specified file path in .npy format
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    np.save(file_path, X)
+

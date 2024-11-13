@@ -29,7 +29,7 @@ class MustLinkCannotLinkClusteringModel(KHyperparamClusteringModel):
             n_clusters: Optional[int] = None,
             random_state: int = 42, 
             gamma=1.0,
-            verbose: bool = True,
+            verbose: bool = False,
             **kwargs
         ):
         logger = logging.getLogger('default')
@@ -53,8 +53,9 @@ class MustLinkCannotLinkClusteringModel(KHyperparamClusteringModel):
         # Step 3: Perform spectral clustering with the modified affinity matrix
         spectral = SpectralClustering(n_clusters=n_clusters, affinity='precomputed', random_state=random_state, verbose=verbose)
         labels = spectral.fit_predict(affinity)
+        centroids = spectral.cluster_centers_
 
-        return labels
+        return labels, centroids
         
 
 class MustLinkCannotLinkKMeans(BaseKMeans):
@@ -183,6 +184,6 @@ class MustLinkCannotLinkCOPKMeans(BaseKMeans):
         ):
         must_link = constraint.must_link if self.ml_cl_constraint_mask.get('must_link', True) else []
         cannot_link = constraint.cannot_link if self.ml_cl_constraint_mask.get('cannot_link', True) else []
-        labels, centers = cop_kmeans(X, k=n_clusters, ml=must_link, cl=cannot_link, tol=tol, random_state=random_state)
-        score = k_optimization.score(X=X, labels=labels, centers=centers)
-        return labels, None, score
+        labels, centroids = cop_kmeans(X, k=n_clusters, ml=must_link, cl=cannot_link, tol=tol, random_state=random_state)
+        score = k_optimization.score(X=X, labels=labels, centers=centroids)
+        return labels, centroids

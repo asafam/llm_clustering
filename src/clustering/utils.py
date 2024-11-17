@@ -177,21 +177,21 @@ def compute_inertia(X, labels):
     return inertia
 
 
-def compute_centroids(embeddings, labels):
+def compute_centroids(X, y):
     """
     Compute the centroids of clusters based on given vectors and labels.
 
     Parameters:
-    vectors (array-like): List or array of vectors (points).
-    labels (array-like): Corresponding labels for each vector.
+    X (array-like): List or array of vectors (points).
+    y (array-like): Corresponding labels for each vector.
 
     Returns:
     centroids (numpy array): Centroids of the clusters.
     """
     # Group vectors by their labels
     clusters = defaultdict(list)
-    for vector, label in zip(embeddings, labels):
-        clusters[label].append(vector)
+    for x, label in zip(X, y):
+        clusters[label].append(x)
 
     # Compute the centroid for each cluster
     centroids = np.vstack([np.mean(np.vstack(cluster), axis=0) for cluster in clusters.values()])

@@ -4,7 +4,7 @@ from datetime import datetime
 import random
 from metric_learn import ITML_Supervised, MMC_Supervised
 from sklearn.preprocessing import StandardScaler
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, AgglomerativeClustering
 from clustering.constraints import *
 from clustering.optimizations import KOptimization
 from clustering.models.base_models import *
@@ -111,7 +111,7 @@ class HardLabelsKMeans(KHyperparamClusteringModel):
         return labels, centroids, kmeans
     
 
-class HardLabelsCentroidsKMeans(KHyperparamClusteringModel):
+class HardLabelsCentroidsInitialization(KHyperparamClusteringModel):
     def _cluster(
             self, 
             X, 
@@ -124,13 +124,20 @@ class HardLabelsCentroidsKMeans(KHyperparamClusteringModel):
         sentences_labels = constraint.get_ids_labels()
         embeddings = np.vstack([X[id] for id in sentences_labels.keys()])
         labels = list(sentences_labels.values())
-        centroids = compute_centroids(embeddings, labels)
-        kmeans = KMeans(n_clusters=n_clusters, init=centroids, random_state=random_state, verbose=verbose)
-        labels = kmeans.fit_predict(X)
+        init_centroids = compute_centroids(embeddings, labels)
+        labels, centroids = self._base_cluster(X, n_clusters=n_clusters, init=init_centroids, random_state=random_state, verbose=verbose)
         return labels, centroids
     
 
-class HardLabelsCentroidsSubstitutionKMeans(KHyperparamClusteringModel):
+class HardLabelsCentroidsInitializationKMeansClustering(BaseKMeans, HardLabelsCentroidsInitialization):
+    pass
+
+
+class HardLabelsCentroidsInitializationAgglomerativeClustering(BaseAgglomerativeClustering, HardLabelsCentroidsInitialization):
+    pass
+    
+
+class HardLabelsCentroidsSubstitutionClustering(KHyperparamClusteringModel):
     def _cluster(
             self, 
             X, 
@@ -143,14 +150,20 @@ class HardLabelsCentroidsSubstitutionKMeans(KHyperparamClusteringModel):
         sentences_labels = constraint.get_ids_labels()
         labels = list(sentences_labels.values())
         X_centroid_reduced, ids_map = create_centroid_reduced_X(X, constraint.get_ids_labels())
-        kmeans = KMeans(n_clusters=n_clusters, random_state=random_state, verbose=verbose)
-        labels_centroid_reduced = kmeans.fit_predict(X_centroid_reduced)
+        labels_centroid_reduced, centroids = self._base_cluster(X_centroid_reduced, n_clusters=n_clusters, random_state=random_state, verbose=verbose)
         labels = [labels_centroid_reduced[ids_map[i]] for i in range(X.shape[0])]
-        centroids = kmeans.cluster_centers_
         return labels, centroids
     
 
-class HardLabelsMahalanobisKMeans(KHyperparamClusteringModel):
+class HardLabelsCentroidsSubstitutionKMeansClustering(BaseKMeans, HardLabelsCentroidsSubstitutionClustering):
+    pass
+
+
+class HardLabelsCentroidsSubstitutiongglomerativeClustering(BaseAgglomerativeClustering, HardLabelsCentroidsSubstitutionClustering):
+    pass
+    
+
+class HardLabelsMahalanobisClustering(KHyperparamClusteringModel):
     def __init__(self, n_constraints: int, algo: str) -> None:
         super().__init__()
         self.n_constraints = n_constraints
@@ -206,11 +219,15 @@ class HardLabelsMahalanobisKMeans(KHyperparamClusteringModel):
         # Step 4: Transform the entire dataset (including unlabeled points)
         X_transformed = model.transform(X_scaled)
 
-        # Step 5: Perform KMeans clustering on the transformed data
-        kmeans = KMeans(n_clusters=n_clusters, random_state=random_state)
-        labels = kmeans.fit_predict(X_transformed)
-
-        # Get the centroids 
-        centroids = kmeans.cluster_centers_
+        # Step 5: Perform clustering on the transformed data
+        labels, centroids = self._base_cluster(X_transformed, n_clusters=n_clusters, random_state=random_state)
 
         return labels, centroids
+        
+
+class HardLabelsMahalanobisKMeansClustering(BaseKMeans, HardLabelsMahalanobisClustering):
+    pass
+    
+
+class HardLabelsMahalanobisAgglomerativeClustering(BaseAgglomerativeClustering, HardLabelsMahalanobisClustering):
+    pass

@@ -1,7 +1,8 @@
 from typing import *
 import numpy as np
 from datetime import datetime
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, AgglomerativeClustering
+from sklearn.preprocessing import StandardScaler
 from clustering.constraints import *
 from clustering.optimizations import KOptimization
 from tqdm.notebook import tqdm
@@ -10,7 +11,6 @@ import math
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from sklearn.cluster import KMeans
 
 
 class ClusteringModel:
@@ -49,15 +49,17 @@ class KHyperparamClusteringModel(ClusteringModel):
             A KOptimization class that takes (X, labels) and returns a score. Higher scores indicate better clustering.
 
         Returns:
-        best_k: int
-            The best number of clusters.
-        best_score: float
+        n_clusters: int
+            The optimal number of clusters.
+        index: float
             The score corresponding to the best k.
+        labels: list
+            The labels predicted for the optimal k.
         """
         logger = logging.getLogger('default')
         logger.info(f"Clustering model: {type(self).__name__}")
 
-        k_labels = [] # Store the iteration results
+        k_info = [] # Store the iteration results
 
         if n_clusters == 0:
             raise ValueError("Cannot cluster witih n_clusters = 0")
@@ -68,7 +70,7 @@ class KHyperparamClusteringModel(ClusteringModel):
             score = k_optimization.score(X, labels, centroids=centroids)
             end_datetime = datetime.now()
             elapsed_seconds = (end_datetime - start_datetime).total_seconds()
-            k_labels.append(dict(
+            k_info.append(dict(
                 k=n_clusters, 
                 labels=labels,
                 score=score,
@@ -83,7 +85,7 @@ class KHyperparamClusteringModel(ClusteringModel):
                 labels=labels, 
                 n_clusters=n_clusters,
                 index=0,
-                k_labels=k_labels
+                k_info=k_info
             )
         
         # Find the best k in the coarse search
@@ -97,7 +99,7 @@ class KHyperparamClusteringModel(ClusteringModel):
             k_end_datetime = datetime.now()
             elapsed_seconds=(k_end_datetime - k_start_datetime).total_seconds()
             logger.debug(f"Optimizing clustering for k = {k} returned a score of {score} after {elapsed_seconds} seconds")
-            k_labels.append(dict(
+            k_info.append(dict(
                 k=k, 
                 labels=labels,
                 score=score,
@@ -110,20 +112,20 @@ class KHyperparamClusteringModel(ClusteringModel):
             ))
 
         # Find the best k in the coarse search
-        max_k_labels = max(k_labels, key=lambda x: x['score'])
-        best_k = max_k_labels['k']
+        optimization_result = k_optimization.find_best_k([x['k'] for x in k_info], [x['score'] for x in k_info])
+        optimal_k = optimization_result['optimal_k']
 
         if k_optimization_coarse_step_size > 1 and k_optimization_fine_range > 0:
             # Fine search around the best coarse k
-            logger.debug(f"Optimizing clustering for fine range of k: ({max(min_k, best_k - k_optimization_fine_range + 1)}, {min(max_k, best_k + k_optimization_fine_range)})")
-            fine_k_values = range(max(min_k, best_k - k_optimization_fine_range + 1), min(max_k, best_k + k_optimization_fine_range))  # ±k_optimization_fine_range around best coarse k
+            logger.debug(f"Optimizing clustering for fine range of k: ({max(min_k, optimal_k - k_optimization_fine_range + 1)}, {min(max_k, optimal_k + k_optimization_fine_range)})")
+            fine_k_values = range(max(min_k, optimal_k - k_optimization_fine_range + 1), min(max_k, optimal_k + k_optimization_fine_range))  # ±k_optimization_fine_range around best coarse k
 
             for k in fine_k_values:
                 labels, centroids = self._cluster(X, ids=ids, n_clusters=k, random_state=random_state, **kwargs)
                 score = k_optimization.score(X, labels, centroids=centroids)
                 elapsed_seconds=(k_end_datetime - k_start_datetime).total_seconds()
                 logger.debug(f"Optimizing clustering for k = {k} returned a score of {score} after {elapsed_seconds} seconds")
-                k_labels.append(dict(
+                k_info.append(dict(
                     k=k,
                     labels=labels,
                     score=score,
@@ -136,30 +138,41 @@ class KHyperparamClusteringModel(ClusteringModel):
                 ))
 
         # Find the best k
-        max_k_labels = max(k_labels, key=lambda x: x['score'])
-        best_labels = max_k_labels['labels']
-        best_k = max_k_labels['k']
-        best_index = k_labels.index(max_k_labels)
+        optimization_result = k_optimization.find_best_k([x['k'] for x in k_info], [x['score'] for x in k_info])
+        optimal_k = optimization_result['optimal_k']
+        optimal_index = optimization_result['optimal_index']
+        optimal_labels = k_info[optimal_index]['labels']
 
-        logger.debug(f"Optimization with {str(k_optimization)} identified optimal k = {best_k}")
+        logger.debug(f"Optimization with {str(k_optimization)} identified optimal k = {optimal_k}")
         
         return dict(
-            labels=best_labels, 
-            n_clusters=best_k,
-            index=best_index,
-            k_labels=k_labels
+            labels=optimal_labels, 
+            n_clusters=optimal_k,
+            index=optimal_index,
+            k_info=k_info
         )
     
-    def _cluster(self, **kwargs):
+    def _cluster(self, X, **kwargs):
+        raise NotImplementedError()
+    
+    def _base_cluster(
+            self, 
+            X, 
+            n_clusters: int, 
+            random_state: int, 
+            verbose: bool = False,
+            **kwargs
+    ):
         raise NotImplementedError()
     
     
 class BaseKMeans(KHyperparamClusteringModel):
+    def _cluster(self, X, **kwargs):
+        return self._base_cluster(X, **kwargs)
     
-    def _cluster(
+    def _base_cluster(
             self, 
             X, 
-            ids: list,
             n_clusters: int, 
             random_state: int, 
             n_init: int = 1, 
@@ -167,7 +180,24 @@ class BaseKMeans(KHyperparamClusteringModel):
             **kwargs
         ):
         kmeans = KMeans(n_clusters=n_clusters, n_init=n_init, random_state=random_state, verbose=verbose)
-        labels = kmeans.fit_predict(X)
+        labels = kmeans.fit_predict(StandardScaler().fit_transform(X))
         centroids = kmeans.cluster_centers_
+        
+        return labels, centroids 
+    
+
+class BaseAgglomerativeClustering(KHyperparamClusteringModel):
+    def _cluster(self, X, **kwargs):
+        return self._base_cluster(X, **kwargs)
+    
+    def _base_cluster(
+            self, 
+            X,
+            n_clusters: int,
+            **kwargs
+        ):
+        model = AgglomerativeClustering(n_clusters=n_clusters)
+        labels = model.fit_predict(StandardScaler().fit_transform(X))
+        centroids = compute_centroids(X, labels)
         
         return labels, centroids 

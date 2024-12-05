@@ -125,7 +125,8 @@ def encode_dataset(
         dataset,
         model: Optional[TextEmbeddingModel],
         file_path: Optional[str],
-        batch_size: int = 128
+        batch_size: int = 128,
+        **kwargs
     ):
      # embed the dataset for clustering
     all_ids = []
@@ -143,7 +144,7 @@ def encode_dataset(
         if embeddings is not None:
             all_embeddings.append(embeddings[batch_ids])
         else:
-            batch_embeddings = model.embed(batch_texts)
+            batch_embeddings = model.embed(batch_texts, **kwargs)
             all_embeddings.append(batch_embeddings)
     X = np.vstack(all_embeddings)
     labels_true = [tensor.item() for tensor in all_labels]

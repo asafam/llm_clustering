@@ -39,6 +39,7 @@ class Claude(LLM):
             raise e
 
         data_text = response.content[0].text
+        # logger.debug(f"LLM returned message (usage statistics: {data_text})")
         logger.debug(f"LLM returned message (usage statistics: {response.usage})")
         
         try:

@@ -98,6 +98,7 @@ def create_constraint(
 
         # Append sampled IDs and labels to the accumulated lists
         constraint_ids = constraint.get_ids() if constraint is not None else []
+        logger.debug(f"Using a constraint with {len(constraint_ids)} clustered labels")
         ids = list(set(constraint_ids + sample_ids))
         labels_true = [id_to_label[id] for id in ids]
 
@@ -128,6 +129,9 @@ def create_constraint(
                 "content": user_prompt
             }
         ]
+        # logger.debug(f"System prompt = {system_prompt}")
+        # logger.debug(f"User prompt = {user_prompt}")
+        # logger.debug(f"messages = {messages}")
         
         # Call the LLM to get predictions based on the messages
         data_raw, data_raw_text = llm.create_messages(system_prompt=system_prompt, messages=messages) # LLM output
@@ -199,6 +203,7 @@ def cluster_with_constraint(
         clustering_model: ClusteringModel,
         cluster_k_information_type: KInformationType = KInformationType.UnknownK,
         k_optimization: Optional[KOptimization] = None,
+        n_clusters: Optional[int] = None,
         min_cluster_size: int = 1,
         min_clusters: int = 2,
         max_clusters: int = 10,
@@ -206,7 +211,11 @@ def cluster_with_constraint(
         **kwargs
 ):
     logger = logging.getLogger('default')
-    if cluster_k_information_type == KInformationType.UnknownK:
+    if n_clusters is not None:
+        # Using provided number of clusters
+        logger.debug(f"K is known, using provided k of {n_clusters}")
+        cluster_results = clustering_model.cluster(X, ids=ids, k_optimization=k_optimization, n_clusters=n_clusters, random_state=random_state, **kwargs)
+    elif cluster_k_information_type == KInformationType.UnknownK:
         # If number of clusters is unknown then optimize it
         unique_labels = constraint.get_unique_labels()
         max_k = max(max_clusters, len(unique_labels) if unique_labels is not None else 0)

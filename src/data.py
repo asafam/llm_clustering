@@ -1,9 +1,8 @@
 from typing import *
 from datasets import load_dataset
 import pandas as pd
-import numpy as np
 import random
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import Dataset
 from enum import Enum
 import math
 from sklearn.preprocessing import LabelEncoder
@@ -48,9 +47,9 @@ def load_dataset_by_name(dataset_name: DatasetName, subset: str = 'test') -> Tex
     elif dataset_name == DatasetName.TOPV2:
         dataset = load_dataset('WillHeld/top_v2')
     elif dataset_name == DatasetName.MEDRXIV:
-        dataset = load_dataset('mteb/medrxiv-clustering-p2p')
+        dataset = load_dataset('mteb/medrxiv-clustering-s2s')
     elif dataset_name == DatasetName.BIORXIV:
-        dataset = load_dataset('mteb/biorxiv-clustering-p2p')
+        dataset = load_dataset('mteb/biorxiv-clustering-s2s')
     elif dataset_name == DatasetName.REUTERS21578:
         dataset = load_dataset('yangwang825/reuters-21578')
 
@@ -60,8 +59,9 @@ def load_dataset_by_name(dataset_name: DatasetName, subset: str = 'test') -> Tex
     text_column = get_text_column(dataset_name=dataset_name)
     label_column = get_label_column(dataset_name=dataset_name)
 
-    texts = dataset[subset][text_column]
-    labels = [label[0] if type(label) == list else label for label in dataset[subset][label_column]]
+    flattened_labels = [(label[0] if type(label) == list else label) for label in dataset[subset][label_column]]
+    texts = [s for s, label in zip(dataset[subset][text_column], flattened_labels) if (dataset_name != DatasetName.CLINC or label != 42)]
+    labels = [label for label in dataset[subset][label_column] if (dataset_name != DatasetName.CLINC or label != 42)]
 
     if type(labels[0] == str):
         label_encoder = LabelEncoder()

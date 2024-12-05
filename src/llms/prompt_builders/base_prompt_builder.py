@@ -47,6 +47,9 @@ class BasePromptBuilder:
             formatted_text += ',\n'.join([('\t' + str(label) + ': [' + '\n\t'.join([f"[ID: {x['id']}] {x['text']}" for x in clusters[label]]) + '\n]') for label in clusters.keys()])
             formatted_text += "}"
             prompt_params["clusters_by_texts"] = formatted_text
+        else:
+            prompt_params["clusters_by_ids"] = "{ }"
+            prompt_params["clusters_by_texts"] = "{ }"
 
         # Format explanations
         explanations = kwargs.get("explanations")

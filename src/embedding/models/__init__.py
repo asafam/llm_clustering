@@ -1,7 +1,5 @@
 import torch
-from transformers import AutoTokenizer, AutoModel, AutoConfig
-from peft import PeftModel
-from llm2vec import LLM2Vec
+from transformers import AutoTokenizer, AutoModel
 from enum import Enum
 import logging 
 
@@ -24,7 +22,7 @@ class TextEmbeddingModel:
             cls._instance = super().__new__(cls)
         return cls._instance
     
-    def embed(self, texts):
+    def embed(self, texts, **kwargs):
         raise NotImplementedError()
     
     def __str__(self) -> str:
@@ -48,7 +46,7 @@ class UniversalTextEmbeddingModel(TextEmbeddingModel):
     def __str__(self) -> str:
         return f"{self.__class__.__name__}(model_name={self.model_name.value})"
         
-    def embed(self, texts):
+    def embed(self, texts, **kwargs):
         """
         Encode a list of texts
         """
@@ -58,28 +56,3 @@ class UniversalTextEmbeddingModel(TextEmbeddingModel):
             embeddings = outputs.last_hidden_state.mean(dim=1).cpu().numpy()  # Average pooling of token embeddings
         return embeddings
     
-
-class LLM2VecTextEmbeddingModel(TextEmbeddingModel):
-    def __init__(self, model_name: EmbeddingModelName) -> None:
-        super().__init__()
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        config = AutoConfig.from_pretrained(model_name, trust_remote_code=True)
-        model = AutoModel.from_pretrained(
-            model_name,
-            trust_remote_code=True,
-            config=config,
-            torch_dtype=torch.bfloat16,
-            device_map="cuda" if torch.cuda.is_available() else "cpu",
-        )
-
-        # Loading MNTP (Masked Next Token Prediction) model.
-        model = PeftModel.from_pretrained(
-            model,
-            model_name,
-        )
-
-        self.l2v = LLM2Vec(model, tokenizer, pooling_mode="mean", max_length=512)
-
-    def embed(self, texts):
-        embeddings = self.l2v.encode(texts)
-        return embeddings

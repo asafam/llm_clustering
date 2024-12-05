@@ -1,8 +1,6 @@
 from typing import *
 from datetime import datetime
 import traceback
-from torch.utils.data import DataLoader
-import numpy as np
 from data import DatasetName, TextLabelDataset, load_dataset_by_name, sample_dataset, get_dataset_from_df
 from clustering.constraints_manager import ConstraintsType, KInformationType
 from clustering.constraints import *
@@ -64,6 +62,7 @@ class SimpleClusteringExperiment(BaseExperiment):
             text_embedding_path: Optional[str],
             clustering_model: ClusteringModel,
             cluster_k_information_type: KInformationType = KInformationType.UnknownK,
+            n_clusters: Optional[int] = None,
             k_optimization: Optional[KOptimization] = None,
             min_clusters: int = 2,
             max_clusters: int = 500,
@@ -88,9 +87,13 @@ class SimpleClusteringExperiment(BaseExperiment):
         # Cluster the dataset using the constraint
         start_datetime2 = datetime.now()
         # cluster the dataset using the constraint
-        if cluster_k_information_type == KInformationType.UnknownK:
+        if n_clusters is not None:
+            # Using provided number of clusters
+            logger.debug(f"K is known, using provided k of {n_clusters}")
+            cluster_results = clustering_model.cluster(X, ids=ids, k_optimization=k_optimization, n_clusters=n_clusters, random_state=random_state, **kwargs)
+        elif cluster_k_information_type == KInformationType.UnknownK:
             # If number of clusters is unknown then optimize it
-            logger.debug(f"K is unknown, using max_k of {max_clusters}")
+            logger.debug(f"K is unknown, using k in range [{min_clusters}, {max_clusters}]")
             cluster_results = clustering_model.cluster(X, ids=ids, k_optimization=k_optimization, min_k=min_clusters, max_k=max_clusters, random_state=random_state, **kwargs)
         elif cluster_k_information_type == KInformationType.GroundTruthK:
             # Otherwise, provide the true cluster number to the clustering model
@@ -203,6 +206,7 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
             llm_keep_context: bool = True,
             dataset_k: Optional[int] = None,
             constraint: Optional[ClusteringConstraints] = None,
+            n_clusters: Optional[int] = None, 
             min_clusters: int = 2,
             max_clusters: int = 10,
             min_cluster_size: int = 0,
@@ -287,6 +291,7 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
             clustering_model=clustering_model,
             cluster_k_information_type=cluster_k_information_type,
             k_optimization=k_optimization,
+            n_clusters=n_clusters,
             min_cluster_size=llm_predicted_k_with_min_cluster_size,
             min_clusters=min_clusters,
             max_clusters=max_clusters,

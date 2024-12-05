@@ -8,6 +8,7 @@ from sklearn.cluster import KMeans, AgglomerativeClustering
 from clustering.constraints import *
 from clustering.optimizations import KOptimization
 from clustering.models.base_models import *
+import logging
 
 
 class HardLabelsKMeans(KHyperparamClusteringModel):
@@ -131,10 +132,6 @@ class HardLabelsCentroidsInitialization(KHyperparamClusteringModel):
 
 class HardLabelsCentroidsInitializationKMeansClustering(BaseKMeans, HardLabelsCentroidsInitialization):
     pass
-
-
-class HardLabelsCentroidsInitializationAgglomerativeClustering(BaseAgglomerativeClustering, HardLabelsCentroidsInitialization):
-    pass
     
 
 class HardLabelsCentroidsSubstitutionClustering(KHyperparamClusteringModel):
@@ -159,7 +156,7 @@ class HardLabelsCentroidsSubstitutionKMeansClustering(BaseKMeans, HardLabelsCent
     pass
 
 
-class HardLabelsCentroidsSubstitutiongglomerativeClustering(BaseAgglomerativeClustering, HardLabelsCentroidsSubstitutionClustering):
+class HardLabelsCentroidsSubstitutionAgglomerativeClustering(BaseAgglomerativeClustering, HardLabelsCentroidsSubstitutionClustering):
     pass
     
 
@@ -180,6 +177,8 @@ class HardLabelsMahalanobisClustering(KHyperparamClusteringModel):
                  random_state: int = 42, 
                  verbose: bool = False, 
                  **kwargs):
+        logger = logging.getLogger('default')
+
         # Labels for the labeled data (-1 for unlabeled points)
         labels_pred_map = {id: -1 for id in ids}
         for id, label in list(constraint.get_ids_labels().items()):
@@ -199,7 +198,16 @@ class HardLabelsMahalanobisClustering(KHyperparamClusteringModel):
         X_constraints = X_scaled[labeled_mask]
 
         # Sample hard labels constraints
-        n_constraints = len(X_constraints) if (self.n_constraints == 0 or self.n_constraints > len(X_constraints)) else self.n_constraints
+        if self.n_constraints == 0:
+            n_constraints = len(X_constraints)
+        # Raise an error if the requested number of constraints is higher than the actual generated contraints
+        elif n_constraints is None or len(X_constraints) >= self.n_constraints:
+            n_constraints = self.n_constraints
+        else:
+            err_msgs = f"Number of actual constraints ({n_constraints}) is smaller than the number of the requested contraints ({self.n_constraints})"
+            logger.error(err_msgs)
+            raise ValueError(f"Number of actual constraints ({n_constraints}) is smaller than the number of the requested contraints ({self.n_constraints})")
+        
         if len(X_constraints) < n_constraints:
             random.seed(random_state)
             indices = random.sample(range(len(y_labeled)), n_constraints)

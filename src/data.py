@@ -21,27 +21,28 @@ class DatasetName(Enum):
 
 
 class TextLabelDataset(Dataset):
-    def __init__(self, texts, labels, ids: Optional[list] = None):
+    def __init__(self, texts, labels, ids: Optional[list] = None, label_names: Optional[list] = None):
         self.ids = ids if ids is not None else list(range(len(texts)))
         self.texts = texts
         self.labels = labels
+        self.label_names = label_names
 
     def __len__(self):
         return len(self.texts)
 
     def __getitem__(self, idx):
-        return self.ids[idx], self.texts[idx], self.labels[idx]
+        return self.ids[idx], self.texts[idx], self.labels[idx], self.label_names[idx]
     
     def __str__(self) -> str:
         return f"{self.__class__.__name__}{len(self.texts)}"
 
 
-def load_dataset_by_name(dataset_name: DatasetName, subset: str = 'test') -> TextLabelDataset:
+def load_dataset_by_name(dataset_name: DatasetName, split: str = 'test') -> TextLabelDataset:
     dataset = None
     if dataset_name == DatasetName.CLINC:
         dataset = load_dataset('clinc_oos', 'small')
     elif dataset_name == DatasetName.BANKING77:
-        dataset = load_dataset('banking77')
+        dataset = load_dataset('mteb/banking77')
     elif dataset_name == DatasetName.AGNEWS:
         dataset = load_dataset('fancyzhx/ag_news')
     elif dataset_name == DatasetName.TOPV2:
@@ -58,25 +59,34 @@ def load_dataset_by_name(dataset_name: DatasetName, subset: str = 'test') -> Tex
     
     text_column = get_text_column(dataset_name=dataset_name)
     label_column = get_label_column(dataset_name=dataset_name)
+    label_name_column = get_label_name_column(dataset_name=dataset_name)
 
-    flattened_labels = [(label[0] if type(label) == list else label) for label in dataset[subset][label_column]]
-    texts = [s for s, label in zip(dataset[subset][text_column], flattened_labels) if (dataset_name != DatasetName.CLINC or label != 42)]
-    labels = [label for label in dataset[subset][label_column] if (dataset_name != DatasetName.CLINC or label != 42)]
+    flattened_labels = [(label[0] if type(label) == list else label) for label in dataset[split][label_column]]
+    texts = [s for s, label in zip(dataset[split][text_column], flattened_labels) if (dataset_name != DatasetName.CLINC or label != 42)]
+    labels = [label for label in dataset[split][label_column] if (dataset_name != DatasetName.CLINC or label != 42)]
+    ids = [i for i, label in enumerate(labels) if (dataset_name != DatasetName.CLINC or label != 42)]
+    if dataset_name != DatasetName.CLINC:
+        label_names = [label for label in dataset[split][label_name_column]]
+    else:
+        intent_mapping = dataset[split].features[label_name_column]
+        id_to_name = intent_mapping.names
+        label_names = [id_to_name[label] for label in labels]
 
     if type(labels[0] == str):
         label_encoder = LabelEncoder()
         labels = label_encoder.fit_transform(labels)
 
-    text_label_dataset = TextLabelDataset(texts, labels)
+    text_label_dataset = TextLabelDataset(texts, labels, label_names=label_names)
     return text_label_dataset
 
 
-def get_dataset_from_df(df: pd.DataFrame, id_column: str = 'id', text_column: str = 'text', label_column: str = 'label') -> TextLabelDataset:
+def get_dataset_from_df(df: pd.DataFrame, id_column: str = 'id', text_column: str = 'text', label_column: str = 'label', label_name_column: str = 'name') -> TextLabelDataset:
     ids = df[id_column].tolist() if 'id' in df else None
     texts = df[text_column].tolist()
     labels = df[label_column].tolist()
+    label_names = df[label_name_column].tolist()
 
-    text_label_dataset = TextLabelDataset(texts, labels, ids)
+    text_label_dataset = TextLabelDataset(texts, labels, ids, label_names)
     return text_label_dataset
 
 
@@ -99,6 +109,15 @@ def get_label_column(dataset_name: DatasetName):
         label_column = 'labels'
     return label_column
 
+def get_label_name_column(dataset_name: DatasetName):
+    if dataset_name == DatasetName.BANKING77:
+        label_name_column = 'label_text'
+    elif dataset_name == DatasetName.TOPV2:
+        label_name_column = 'domain'
+    else:
+        label_name_column = get_label_column(dataset_name=dataset_name)
+    return label_name_column
+
 
 def sample_dataset(
     dataset: TextLabelDataset,
@@ -112,7 +131,7 @@ def sample_dataset(
     df = pd.DataFrame({
         'id': [item[0] for item in dataset],
         'text': [item[1] for item in dataset],
-        'label': [item[2] for item in dataset]
+        'label': [item[2] for item in dataset],
     })
 
     # Seed the random generator to repeat results

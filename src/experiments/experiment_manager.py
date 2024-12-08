@@ -19,6 +19,7 @@ def create_constraint(
         constraint_type: ConstraintsType,
         prompt_type: Optional[PromptType] = None,
         k: int = 0,
+        k_information_type: KInformationType = KInformationType.UnknownK,
         min_sample_cluster_size: int = 0,
         min_constraint_cluster_size: int = 0,
         constraint: Optional[ClusteringConstraints] = None,
@@ -115,6 +116,7 @@ def create_constraint(
             context=context, 
             ids=sample_ids, 
             texts=sample_texts, 
+            n_clusters=len(set(id_to_label.values())) if k_information_type == KInformationType.GroundTruthK else None,
             **kwargs
         ) # Build the prompt
 

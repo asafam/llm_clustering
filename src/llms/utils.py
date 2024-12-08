@@ -10,6 +10,7 @@ class PromptType(Enum):
     SimpleClusteringPrompt2 = 'simple_clustering_prompt1_1'
     HardLabelsClusteringPrompt = 'hard_labels_clustering_prompt'
     MultiStepHardLabelsClusteringPrompt = 'hard_labels_clustering_multi_step_prompt'
+    MultiStepHardLabelsClusteringPromptB = 'hard_labels_clustering_multi_step_prompt_b'
     MultiStepHardLabelsClusteringPrompt2 = 'hard_labels_clustering_multi_step_prompt2'
     MultiStepHardLabelsClusteringPrompt3 = 'hard_labels_clustering_multi_step_prompt3'
     HardLabelsClusteringCoTPrompt = 'hard_labels_clustering_prompt_cot'
@@ -59,14 +60,14 @@ def generate_prompt(prompt_type: PromptType, **kwargs):
 
 def get_formatter(prompt_type: PromptType, step: int = 0) -> Callable:
     if prompt_type in [
-        PromptType.SimpleClusteringPrompt2, PromptType.HardLabelsClusteringPrompt, PromptType.MultiStepHardLabelsClusteringPrompt, 
+        PromptType.SimpleClusteringPrompt2, PromptType.HardLabelsClusteringPrompt, PromptType.MultiStepHardLabelsClusteringPromptB, 
     ]:
         return format_response_as_dictionary_of_clusters
     elif prompt_type in [
         PromptType.SimpleClusteringPrompt, PromptType.HardLabelsClusteringPrompt, PromptType.HardLabelsClusteringCoTPrompt, 
         PromptType.HardLabelsClusteringExcludeUncertainPrompt, PromptType.MultiStepHardLabelsClusteringPrompt, 
         PromptType.MultiStepHardLabelsClusteringPrompt2, PromptType.MultiStepHardLabelsClusteringPrompt3
-        ]:
+    ]:
         return format_response_as_dictionary_of_sentences
     elif prompt_type == PromptType.MustLinkCannotLinkClusteringPrompt:
         return format_response_as_must_link_cannot_link
@@ -85,13 +86,6 @@ def format_response_as_dictionary_of_clusters(data: dict, context: Optional[dict
     explanations = data.get('explanations')
 
     return dict(sentences_labels=sentences_labels, explanations=explanations)
-
-    # sentences_labels = [-1] * size
-    # for label, sids in data['result'].items():
-    #     for sid in sids:
-    #         sentences_labels[sid] = label
-    
-    # return dict(sentences_labels=sentences_labels)
 
 
 def format_response_as_dictionary_of_sentences(data: dict, context: Optional[dict] = None, **kwargs) -> list:

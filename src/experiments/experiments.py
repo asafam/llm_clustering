@@ -101,6 +101,7 @@ class SimpleClusteringExperiment(BaseExperiment):
             logger.debug(f"K is known, using true k of {n_clusters}")
             cluster_results = clustering_model.cluster(X, ids=ids, k_optimization=k_optimization, n_clusters=n_clusters, random_state=random_state, **kwargs)
         else:
+            cluster_results = None
             raise ValueError(f"Illegal cluster_k_information_type given in BaseClustering: {cluster_k_information_type.value}")
         logger.debug(f"Clustering completed in {(datetime.now() - start_datetime2).total_seconds():.2f} seconds")
 
@@ -114,6 +115,7 @@ class SimpleClusteringExperiment(BaseExperiment):
             labels_true=labels_true,
             labels_pred=labels_pred,
         )
+        results['cluster_results'] = cluster_results
         results.update(scores)
 
         end_datetime = datetime.now()
@@ -237,14 +239,14 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
             i = 0
             while i < max_constraint_iterations:
                 logger.debug(f"Creating constraint: iteration {i + 1} / {max_constraint_iterations}")
-                k = 0 if llm_k_information_type == KInformationType.GroundTruthK else None
                 constraint_results = create_constraint(
                     dataset=dataset,
                     sample_n=sample_n,
                     llm=llm,
                     constraint_type=constraint_type,
                     prompt_type=prompt_type,
-                    k=k,
+                    k=kwargs.get("sample_k"),
+                    k_information_type=llm_k_information_type,
                     min_sample_cluster_size=min_cluster_size,
                     min_constraint_cluster_size=llm_predicted_k_with_min_cluster_size,
                     constraint=constraint,
@@ -310,6 +312,7 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
             labels_true=labels_true,
             labels_pred=labels_pred,
         )
+        results['cluster_results'] = cluster_results
         results.update(constraint_results)
         results.update(scores)
 

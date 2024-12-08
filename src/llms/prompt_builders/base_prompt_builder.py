@@ -59,8 +59,8 @@ class BasePromptBuilder:
             prompt_params["explanations"] = formatted_text
 
         # Format k_info 
-        k = kwargs.get('k')
-        prompt_params["k_info"] = f"Number of clusters: {k}\n\n" if (k is not None and k > 0) else "" # Replace the {k_info} placeholder
+        n_clusters = kwargs.get('n_clusters')
+        prompt_params["k_info"] = f"the goal is to partition the data into exactly {n_clusters} clusters. However, the provided sample data may contain fewer than {n_clusters} clusters due to its limited size.\n\n" if (n_clusters is not None and n_clusters > 0) else "" # Replace the {k_info} placeholder
 
         system_prompt = system_prompt.format(**prompt_params)
         user_prompt = user_prompt.format(**prompt_params)

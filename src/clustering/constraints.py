@@ -89,7 +89,7 @@ class HardLabelsClusteringContraints(PartitionsLevelClusteringConstraints):
     def get_ids(self) -> list:
         return list(self.get_ids_labels().keys())
     
-    def get_ids_labels(self) -> dict:
+    def get_ids_labels(self, ) -> dict:
         if self.min_cluster_size <= 1:
             return self.sentences_labels
         

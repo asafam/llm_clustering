@@ -146,7 +146,10 @@ class HardLabelsClusteringContraints(PartitionsLevelClusteringConstraints):
 
         # Add K predictions evaluation metrics
         result.update(
-            k = evaluate_k(k_true=len(set(labels_true)), k_pred=len(set(self.get_ids_labels().values())))
+            k = evaluate_k(
+                k_true=len(set(labels_true)), 
+                k_pred=len(set(self.get_ids_labels().values()))
+            )
         )
         return result
     

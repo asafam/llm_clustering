@@ -233,7 +233,7 @@ def cluster_with_constraint(
         if constraint.get_labels_count() is None:
             raise ValueError(f"No labels were correctly predicted running with constraint {constraint}")
         else:
-            n_clusters = len([label for label, count in constraint.get_labels_count().items() if count >= min_cluster_size])
+            n_clusters = len([_ for _, count in constraint.get_labels_count().items() if count >= min_cluster_size])
             logger.debug(f"K is predicted, using constraint predicted k of {n_clusters} (using threshold of {min_cluster_size}, originally predicted {len([label for label in constraint.get_labels_count().keys()])})")
             cluster_results = clustering_model.cluster(X, ids=ids, constraint=constraint,  k_optimization=k_optimization, n_clusters=n_clusters, random_state=random_state, **kwargs)
 

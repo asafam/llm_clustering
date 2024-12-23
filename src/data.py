@@ -24,7 +24,18 @@ class DatasetName(Enum):
 
 
 class TextLabelDataset(Dataset):
-    def __init__(self, texts, labels, ids: Optional[list] = None, label_names: Optional[list] = None):
+    def __init__(self, texts, labels, ids: Optional[list] = None, label_names: Optional[list] = None, shuffle: bool = True):
+        if shuffle:
+            joined = list(zip(texts, labels, label_names))
+            random.seed(42)
+            random.shuffle(joined)
+            # Unpack the shuffled pairs back into labels and texts
+            texts, labels, label_names = zip(*joined)
+            # Convert back to lists
+            texts = list(texts)
+            labels = list(labels)
+            label_names = list(label_names)
+            
         self.ids = ids if ids is not None else list(range(len(texts)))
         self.texts = texts
         self.labels = labels
@@ -72,7 +83,6 @@ def load_dataset_by_name(dataset_name: DatasetName, split: str = 'test') -> Text
     flattened_labels = [(label[0] if type(label) == list else label) for label in dataset[split][label_column]]
     texts = [s for s, label in zip(dataset[split][text_column], flattened_labels) if (dataset_name != DatasetName.CLINC or label != 42)]
     labels = [label for label in dataset[split][label_column] if (dataset_name != DatasetName.CLINC or label != 42)]
-    ids = [i for i, label in enumerate(labels) if (dataset_name != DatasetName.CLINC or label != 42)]
     if dataset_name != DatasetName.CLINC:
         label_names = [label for label in dataset[split][label_name_column]]
     else:

@@ -1,5 +1,5 @@
 from InstructorEmbedding import INSTRUCTOR
-from models import TextEmbeddingModel
+from embedding.models import TextEmbeddingModel
 
 class InstructorTextEmbeddingModel(TextEmbeddingModel):
     def __init__(self) -> None:

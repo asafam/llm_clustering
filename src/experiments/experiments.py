@@ -206,6 +206,7 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
             k_optimization: Optional[KOptimization] = None,
             llm_predicted_k_with_min_cluster_size: int = 1,
             llm_keep_context: bool = True,
+            llm_messages_window: int = 0,
             dataset_k: Optional[int] = None,
             constraint: Optional[ClusteringConstraints] = None,
             n_clusters: Optional[int] = None, 
@@ -237,7 +238,8 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
         if constraint is None:
             start_datetime2 = datetime.now()
             i = 0
-            while i < max_constraint_iterations:
+            sampled_all_dataset = False
+            while not sampled_all_dataset and i < max_constraint_iterations:
                 logger.debug(f"Creating constraint: iteration {i + 1} / {max_constraint_iterations}")
                 constraint_results = create_constraint(
                     dataset=dataset,
@@ -253,6 +255,7 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
                     start_step = 0 if i == 0 else -1,
                     max_steps = max_steps,
                     llm_keep_context=llm_keep_context,
+                    llm_messages_window=llm_messages_window,
                     exhaustive_step=exhaustive_step,
                     sample_until_convergence=sample_until_convergence,
                     sample_same = sample_same,
@@ -261,6 +264,7 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
                     **kwargs
                 )
                 constraint = constraint_results['constraint']
+                sampled_all_dataset = constraint_results['sampled_all_dataset']
                 logger.debug(f"Constraint evaluation returned {constraint_results['constraint_quality']}")
                 
                 if constraint_results['sample_size'] == 0 and llm_predicted_k_with_min_cluster_size > 1:
@@ -269,7 +273,9 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
                 
                 i += 1
 
-            if i == max_constraint_iterations and max_constraint_iterations > 1:
+            if sampled_all_dataset:
+                logger.debug(f"Completed iterating over the entire dataset after {i + 1} iterations")
+            elif i == max_constraint_iterations and max_constraint_iterations > 1:
                 logger.debug(f"Completed creating constraint after {i + 1} max iterations")
 
             logger.debug(f"Constraint creation completed in {(datetime.now() - start_datetime2).total_seconds():.2f} seconds")
@@ -369,3 +375,4 @@ class LLMConstraintedClusteringQualityExperiment(BaseExperiment):
         ))
 
         return results
+

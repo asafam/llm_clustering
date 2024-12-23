@@ -5,6 +5,7 @@ import random
 from metric_learn import ITML_Supervised, MMC_Supervised
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans, AgglomerativeClustering
+from sklearn.mixture import GaussianMixture
 from clustering.constraints import *
 from clustering.optimizations import KOptimization
 from clustering.models.base_models import *
@@ -194,8 +195,8 @@ class HardLabelsMahalanobisClustering(KHyperparamClusteringModel):
 
         # Step 2: Standardize the data (applies to both labeled and unlabeled points)
         scaler = StandardScaler()
-        X_scaled = scaler.fit_transform(X)  # Fit on all data
-        X_constraints = X_scaled[labeled_mask]
+        X_normalized = scaler.fit_transform(X)  # Fit on all data
+        X_constraints = X_normalized[labeled_mask]
 
         # Sample hard labels constraints
         if self.n_constraints == 0:
@@ -225,7 +226,7 @@ class HardLabelsMahalanobisClustering(KHyperparamClusteringModel):
         model.fit(X_constraints, y_labeled)
 
         # Step 4: Transform the entire dataset (including unlabeled points)
-        X_transformed = model.transform(X_scaled)
+        X_transformed = model.transform(X_normalized)
 
         # Step 5: Perform clustering on the transformed data
         labels, centroids = self._base_cluster(X_transformed, n_clusters=n_clusters, random_state=random_state)
@@ -239,3 +240,63 @@ class HardLabelsMahalanobisKMeansClustering(BaseKMeans, HardLabelsMahalanobisClu
 
 class HardLabelsMahalanobisAgglomerativeClustering(BaseAgglomerativeClustering, HardLabelsMahalanobisClustering):
     pass
+
+
+class HardLabelsGMMClustering(KHyperparamClusteringModel):
+    def __init__(self, fit_hard_labeled_set: bool = False):
+        super().__init__()
+        self.fit_hard_labeled_set = fit_hard_labeled_set
+
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}(fit_hard_labeled_set={self.fit_hard_labeled_set})"
+
+    def _cluster(self, 
+                X, 
+                ids: list, 
+                n_clusters: int, 
+                constraint: HardLabelsClusteringContraints, 
+                random_state: int = 42, 
+                verbose: bool = False, 
+                **kwargs):
+        logger = logging.getLogger('default')
+
+        # Steps 1: Labels for the labeled data
+        y_labeled = constraint.get_labels()
+
+        # Step 2: Standardize the data (applies to both labeled and unlabeled points)
+        scaler = StandardScaler()
+        X_normalized = scaler.fit_transform(X)  # Fit on all data
+        X_constraints = X[constraint.get_ids()]
+
+        # Step 3: Compute GMM initialization parameters from the labeled subset
+        unique_labels = np.unique(y_labeled)  # Correctly extract unique labels as an iterable
+        centroids = np.array([X_constraints[y_labeled == label].mean(axis=0) for label in unique_labels])
+        weights_init = np.array([np.sum(y_labeled == label) / len(y_labeled) for label in unique_labels])
+        # covariances_init = np.array([np.cov(X_constraints[y_labeled == label].T) for label in unique_labels])
+        epsilon = 1e-6  # Small constant for regularization
+        covariances_init = np.array([
+            np.cov(X_constraints[y_labeled == label].T) + epsilon * np.eye(X_constraints.shape[1])
+            for label in unique_labels
+        ])
+
+        # Step 4: Initialize and fit GMM with custom parameters
+        gmm = GaussianMixture(
+            n_components=n_clusters,
+            random_state=random_state,
+            # covariance_type='full',  # Use 'full' because covariances are full matrices
+            means_init=centroids,
+            weights_init=weights_init
+        )
+
+        # Set the precisions manually based on covariances
+        # gmm.precisions_cholesky_ = np.linalg.cholesky(np.linalg.inv(covariances_init))  # Convert covariances to precisions
+        if self.fit_hard_labeled_set:
+            gmm.fit(X_constraints)
+        else:
+            gmm.fit(X_normalized)
+
+        # Step 5: Predict cluster assignments
+        labels = gmm.predict(X_normalized)
+
+        return labels, centroids
+

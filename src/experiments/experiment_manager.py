@@ -26,6 +26,7 @@ def create_constraint(
         start_step: int = 0,
         max_steps: int = 5,
         llm_keep_context: bool = True,
+        llm_messages_window: int = 0,
         exhaustive_step: bool = False,
         sample_until_convergence: bool = False,
         sample_same: bool = False,
@@ -56,6 +57,7 @@ def create_constraint(
     # Ensure sample_n is a list, even if passed as a single integer
     sample_ns = sample_n if type(sample_n) == list else [sample_n]
     sample_size = None # Placeholder for this var
+    sampled_all_dataset = False
 
     # Normalize the start_step index
     start_step = start_step if (start_step != -1 and start_step < len(sample_ns)) else (len(sample_ns) - 1)
@@ -90,6 +92,8 @@ def create_constraint(
         sample_size = len(sample_df)
         logger.debug(f"sample_size = {sample_size}, (orig_sample_size = {orig_sample_size})")
         if sample_size == 0:
+            sampled_all_dataset = True
+            logger.debug(f"Nothing left to sample. Breaking the loop...")
             break
 
         # Extract IDs, texts, and labels from the sampled subset
@@ -136,7 +140,8 @@ def create_constraint(
         # logger.debug(f"messages = {messages}")
         
         # Call the LLM to get predictions based on the messages
-        data_raw, data_raw_text = llm.create_messages(system_prompt=system_prompt, messages=messages) # LLM output
+        messages_window = llm_messages_window + (len(messages) % 2)
+        data_raw, data_raw_text = llm.create_messages(system_prompt=system_prompt, messages=messages[-messages_window:]) # LLM output
         
         # Add the LLM's response to messages
         messages += [
@@ -183,7 +188,9 @@ def create_constraint(
         user_prompt=user_prompt, 
         system_prompt=system_prompt,
         constraint_quality=constraint_quality,
-        sample_size = sample_size
+        sample_size = sample_size,
+        sampled_ids = ids,
+        sampled_all_dataset = sampled_all_dataset
     )
 
     # Compile final results including all sampled IDs, true labels, and constraint data

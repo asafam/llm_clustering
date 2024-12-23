@@ -14,6 +14,9 @@ class DatasetName(Enum):
     CLINC_TOY = "CLINC_TOY"
     BANKING77 = "BANKING77"
     TOPV2 = "TOPV2"
+    MASSIVE = "MASSIVE"
+    MTOP_D = "MTOP_DOMAIN"
+    MTOP_I = "MTOP_INTENT"
     AGNEWS = "AGNEWS"
     REUTERS21578 = "REUTERS21578"
     MEDRXIV = "MEDRXIV"
@@ -45,6 +48,12 @@ def load_dataset_by_name(dataset_name: DatasetName, split: str = 'test') -> Text
         dataset = load_dataset('mteb/banking77')
     elif dataset_name == DatasetName.AGNEWS:
         dataset = load_dataset('fancyzhx/ag_news')
+    elif dataset_name == DatasetName.MASSIVE:
+        dataset = load_dataset('mteb/amazon_massive_intent', "en", trust_remote_code=True)
+    elif dataset_name == DatasetName.MTOP_D:
+        dataset = load_dataset('mteb/mtop_domain', "en", trust_remote_code=True)
+    elif dataset_name == DatasetName.MTOP_I:
+        dataset = load_dataset('mteb/mtop_intent', "en", trust_remote_code=True)
     elif dataset_name == DatasetName.TOPV2:
         dataset = load_dataset('WillHeld/top_v2')
     elif dataset_name == DatasetName.MEDRXIV:
@@ -53,7 +62,6 @@ def load_dataset_by_name(dataset_name: DatasetName, split: str = 'test') -> Text
         dataset = load_dataset('mteb/biorxiv-clustering-s2s')
     elif dataset_name == DatasetName.REUTERS21578:
         dataset = load_dataset('yangwang825/reuters-21578')
-
     else:
         raise ValueError(f"No supported dataset {dataset_name}")
     
@@ -80,7 +88,13 @@ def load_dataset_by_name(dataset_name: DatasetName, split: str = 'test') -> Text
     return text_label_dataset
 
 
-def get_dataset_from_df(df: pd.DataFrame, id_column: str = 'id', text_column: str = 'text', label_column: str = 'label', label_name_column: str = 'name') -> TextLabelDataset:
+def get_dataset_from_df(
+        df: pd.DataFrame, 
+        id_column: str = 'id', 
+        text_column: str = 'text', 
+        label_column: str = 'label', 
+        label_name_column: str = 'name'
+    ) -> TextLabelDataset:
     ids = df[id_column].tolist() if 'id' in df else None
     texts = df[text_column].tolist()
     labels = df[label_column].tolist()
@@ -110,7 +124,7 @@ def get_label_column(dataset_name: DatasetName):
     return label_column
 
 def get_label_name_column(dataset_name: DatasetName):
-    if dataset_name == DatasetName.BANKING77:
+    if dataset_name in [DatasetName.BANKING77, DatasetName.MTOP_D, DatasetName.MTOP_I]:
         label_name_column = 'label_text'
     elif dataset_name == DatasetName.TOPV2:
         label_name_column = 'domain'

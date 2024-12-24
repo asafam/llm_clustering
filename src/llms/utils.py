@@ -81,7 +81,8 @@ def format_response_as_dictionary_of_clusters(data: dict, context: Optional[dict
     sentences_labels = context.get('sentences_labels', {}) if context else {}
     for label, sids in data['result'].items():
         for sid in sids:
-            sentences_labels[sid] = label
+            orig_sid = shuffled_ids.index(sid)
+            sentences_labels[orig_sid] = label
     
     explanations = data.get('explanations')
 
@@ -91,7 +92,8 @@ def format_response_as_dictionary_of_clusters(data: dict, context: Optional[dict
 def format_response_as_dictionary_of_sentences(data: dict, context: Optional[dict] = None, **kwargs) -> list:
     sentences_labels = context.get('sentences_labels', {}) if context else {}
     for sid, label in data['result'].items():
-        sentences_labels[sid] = label
+        orig_sid = shuffled_ids.index(sid)
+        sentences_labels[orig_sid] = label
     
     explanations = data.get('explanations')
 

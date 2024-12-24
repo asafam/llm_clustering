@@ -24,13 +24,11 @@ class DatasetName(Enum):
 
 
 class TextLabelDataset(Dataset):
-    def __init__(self, texts, labels, label_names: Optional[list] = None, ids: Optional[list] = None, shuffle: bool = True, **kwargs):
+    def __init__(self, texts, labels, label_names: Optional[list] = None, ids: Optional[list] = None, **kwargs):
         ids = ids if ids is not None else list(range(len(texts)))
-
-        if shuffle:
-            shuffled_ids = ids.copy()
-            random.seed(42)
-            random.shuffle(shuffled_ids)
+        shuffled_ids = ids.copy()
+        random.seed(42)
+        random.shuffle(shuffled_ids)
             
         self.ids = ids
         self.shuffled_ids = shuffled_ids
@@ -154,6 +152,8 @@ def sample_dataset(
         'id': [item[0] for item in dataset],
         'text': [item[1] for item in dataset],
         'label': [item[2] for item in dataset],
+        'label_name': [item[3] for item in dataset],
+        'shuffle_id': [item[4] for item in dataset],
     })
 
     # Seed the random generator to repeat results

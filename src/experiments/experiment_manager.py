@@ -98,6 +98,7 @@ def create_constraint(
 
         # Extract IDs, texts, and labels from the sampled subset
         sample_ids = sample_df['id'].tolist()
+        sample_shuffle_ids = sample_df['shuffle_id'].tolist()
         sample_texts = sample_df['text'].tolist()
         sample_labels = sample_df['label'].tolist()
 
@@ -118,7 +119,7 @@ def create_constraint(
             user_prompt = prompts.get("user_prompt"),
             step=step, 
             context=context, 
-            ids=sample_ids, 
+            ids=sample_shuffle_ids, 
             texts=sample_texts, 
             n_clusters=len(set(id_to_label.values())) if k_information_type == KInformationType.GroundTruthK else None,
             **kwargs

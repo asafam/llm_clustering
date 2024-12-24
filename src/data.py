@@ -24,7 +24,7 @@ class DatasetName(Enum):
 
 
 class TextLabelDataset(Dataset):
-    def __init__(self, texts, labels, label_names: Optional[list] = None, ids: Optional[list] = None, shuffle: bool = True):
+    def __init__(self, texts, labels, label_names: Optional[list] = None, ids: Optional[list] = None, shuffle: bool = True, **kwargs):
         ids = ids if ids is not None else list(range(len(texts)))
 
         if shuffle:

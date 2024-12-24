@@ -35,20 +35,21 @@ class BasePromptBuilder:
         # Format texts as [ID: {index}] {text}
         ids = kwargs.get('ids')
         texts = kwargs.get('texts')
+        id_to_shuffled_id = kwargs.get('id_to_shuffled_id')
         if ids and texts:
-            formatted_texts = "\n".join([f"[ID: {id}] {text}" for id, text in zip(ids, texts)])
+            formatted_texts = "\n".join([f"[ID: {id_to_shuffled_id[id]}] {text}" for id, text in zip(ids, texts)])
             prompt_params["texts"] = formatted_texts
             
         # Format clusters
         clusters = kwargs.get("clusters")
         if clusters:
             formatted_text = "{{"
-            formatted_text += ',\n'.join([('\t' + str(label) + ': [' + ', '.join([str(x['id']) for x in clusters[label]]) + ']') for label in clusters.keys()])
+            formatted_text += ',\n'.join([('\t' + str(label) + ': [' + ', '.join([str(id_to_shuffled_id[x['id']]) for x in clusters[label]]) + ']') for label in clusters.keys()])
             formatted_text += "}}"
             prompt_params["clusters_by_ids"] = formatted_text
 
             formatted_text = "{{"
-            formatted_text += ',\n'.join([('\t' + str(label) + ': [' + '\n\t'.join([f"[ID: {x['id']}] {x['text']}" for x in clusters[label]]) + '\n]') for label in clusters.keys()])
+            formatted_text += ',\n'.join([('\t' + str(label) + ': [' + '\n\t'.join([f"[ID: {id_to_shuffled_id[x['id']]}] {x['text']}" for x in clusters[label]]) + '\n]') for label in clusters.keys()])
             formatted_text += "}}"
             prompt_params["clusters_by_texts"] = formatted_text
         else:

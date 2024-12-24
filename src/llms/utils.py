@@ -79,9 +79,10 @@ def get_formatter(prompt_type: PromptType, step: int = 0) -> Callable:
 
 def format_response_as_dictionary_of_clusters(data: dict, context: Optional[dict] = None, **kwargs) -> list:
     sentences_labels = context.get('sentences_labels', {}) if context else {}
+    shuffled_id_to_id = kwargs.get('shuffled_id_to_id')
     for label, sids in data['result'].items():
         for sid in sids:
-            orig_sid = shuffled_ids.index(sid)
+            orig_sid = shuffled_id_to_id[sid]
             sentences_labels[orig_sid] = label
     
     explanations = data.get('explanations')
@@ -91,8 +92,9 @@ def format_response_as_dictionary_of_clusters(data: dict, context: Optional[dict
 
 def format_response_as_dictionary_of_sentences(data: dict, context: Optional[dict] = None, **kwargs) -> list:
     sentences_labels = context.get('sentences_labels', {}) if context else {}
+    shuffled_id_to_id = kwargs.get('shuffled_id_to_id')
     for sid, label in data['result'].items():
-        orig_sid = shuffled_ids.index(sid)
+        orig_sid = shuffled_id_to_id[sid]
         sentences_labels[orig_sid] = label
     
     explanations = data.get('explanations')

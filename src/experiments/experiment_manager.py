@@ -41,6 +41,8 @@ def create_constraint(
     df = sample_dataset(dataset=dataset)
     id_to_label = df.set_index('id')['label'].to_dict()
     id_to_text = df.set_index('id')['text'].to_dict()
+    shuffled_id_to_id = df.set_index('shuffle_id')['id'].to_dict()
+    id_to_shuffled_id = df.set_index('id')['shuffle_id'].to_dict()
     ids = []
     
     # Determine prompt type, falling back to a prompt by constraint if not provided
@@ -98,7 +100,6 @@ def create_constraint(
 
         # Extract IDs, texts, and labels from the sampled subset
         sample_ids = sample_df['id'].tolist()
-        sample_shuffle_ids = sample_df['shuffle_id'].tolist()
         sample_texts = sample_df['text'].tolist()
         sample_labels = sample_df['label'].tolist()
 
@@ -119,8 +120,9 @@ def create_constraint(
             user_prompt = prompts.get("user_prompt"),
             step=step, 
             context=context, 
-            ids=sample_shuffle_ids, 
+            ids=sample_ids, 
             texts=sample_texts, 
+            id_to_shuffled_id=id_to_shuffled_id,
             n_clusters=len(set(id_to_label.values())) if k_information_type == KInformationType.GroundTruthK else None,
             **kwargs
         ) # Build the prompt
@@ -153,7 +155,7 @@ def create_constraint(
         ]
 
         # Format the raw data using the appropriate formatter function
-        format_func = get_formatter(prompt_type=prompt_type, step=step)
+        format_func = get_formatter(prompt_type=prompt_type, step=step, shuffled_id_to_id=shuffled_id_to_id)
         data = format_func(data_raw, context=context) if format_func else data_raw
 
         # Generate constraints based on the accumulated data and sampled subset

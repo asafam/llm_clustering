@@ -24,19 +24,23 @@ class DatasetName(Enum):
 
 
 class TextLabelDataset(Dataset):
-    def __init__(self, texts, labels, ids: Optional[list] = None, label_names: Optional[list] = None, shuffle: bool = True):
+    def __init__(self, texts, labels, label_names: Optional[list] = None, ids: Optional[list] = None, shuffle: bool = True):
+        ids = ids if ids is not None else list(range(len(texts)))
+
         if shuffle:
-            joined = list(zip(texts, labels, label_names))
+            joined = list(zip(ids, texts, labels, label_names))
             random.seed(42)
             random.shuffle(joined)
             # Unpack the shuffled pairs back into labels and texts
-            texts, labels, label_names = zip(*joined)
+            ids, texts, labels, label_names = zip(*joined)
             # Convert back to lists
+            ids = list(ids)
             texts = list(texts)
             labels = list(labels)
             label_names = list(label_names)
             
-        self.ids = ids if ids is not None else list(range(len(texts)))
+        self.ids = list(range(len(ids)))
+        self.orig_ids = ids
         self.texts = texts
         self.labels = labels
         self.label_names = label_names
@@ -51,7 +55,7 @@ class TextLabelDataset(Dataset):
         return f"{self.__class__.__name__}{len(self.texts)}"
 
 
-def load_dataset_by_name(dataset_name: DatasetName, split: str = 'test') -> TextLabelDataset:
+def load_dataset_by_name(dataset_name: DatasetName, split: str = 'test', **kwargs) -> TextLabelDataset:
     dataset = None
     if dataset_name == DatasetName.CLINC:
         dataset = load_dataset('clinc_oos', 'small')
@@ -94,7 +98,7 @@ def load_dataset_by_name(dataset_name: DatasetName, split: str = 'test') -> Text
         label_encoder = LabelEncoder()
         labels = label_encoder.fit_transform(labels)
 
-    text_label_dataset = TextLabelDataset(texts, labels, label_names=label_names)
+    text_label_dataset = TextLabelDataset(texts, labels, label_names=label_names, **kwargs)
     return text_label_dataset
 
 

@@ -27,6 +27,10 @@ class BasePromptBuilder:
 
         prompt_params["hint"] = kwargs.get('hint', "their meaning")
         prompt_params["dataset_knowledge"] = kwargs.get('dataset_knowledge')
+
+        examples = kwargs.get("prompt_examples")
+        example = examples[step if step == 0 else 1]
+        prompt_params["example"] = self.build_example(example)
         
         # Format texts as [ID: {index}] {text}
         ids = kwargs.get('ids')
@@ -34,22 +38,22 @@ class BasePromptBuilder:
         if ids and texts:
             formatted_texts = "\n".join([f"[ID: {id}] {text}" for id, text in zip(ids, texts)])
             prompt_params["texts"] = formatted_texts
-
+            
         # Format clusters
         clusters = kwargs.get("clusters")
         if clusters:
-            formatted_text = "{"
+            formatted_text = "{{"
             formatted_text += ',\n'.join([('\t' + str(label) + ': [' + ', '.join([str(x['id']) for x in clusters[label]]) + ']') for label in clusters.keys()])
-            formatted_text += "}"
+            formatted_text += "}}"
             prompt_params["clusters_by_ids"] = formatted_text
 
-            formatted_text = "{"
+            formatted_text = "{{"
             formatted_text += ',\n'.join([('\t' + str(label) + ': [' + '\n\t'.join([f"[ID: {x['id']}] {x['text']}" for x in clusters[label]]) + '\n]') for label in clusters.keys()])
-            formatted_text += "}"
+            formatted_text += "}}"
             prompt_params["clusters_by_texts"] = formatted_text
         else:
-            prompt_params["clusters_by_ids"] = "{ }"
-            prompt_params["clusters_by_texts"] = "{ }"
+            prompt_params["clusters_by_ids"] = "{{ }}"
+            prompt_params["clusters_by_texts"] = "{{ }}"
 
         # Format explanations
         explanations = kwargs.get("explanations")
@@ -67,6 +71,42 @@ class BasePromptBuilder:
 
         return system_prompt, user_prompt
     
+    def build_example(self, example_obj) -> str:
+        existing_clusters = example_obj.get('existing_clusters')
+        sentences = example_obj['sentences']
+        explanations = example_obj['explanations']
+
+        example = "<example>\n"
+        
+        if existing_clusters:
+            example += "Existing clustering:\n"
+            example += "{{\n"
+            for label, ids in existing_clusters.items():
+                example += f"\t{str(label)}: [{', '.join([str(x) for x in ids])}]\n"
+            example += "}}\n"
+            example += "\n"
+
+        example += "Sentences:\n"
+        for sentence in sentences:
+            example += f"[ID: {sentence['id']}] {sentence['text']}\n"
+        example += "\n"
+        example += "Outputs:\n"
+        example += "{{\n"
+        example += "\t\"results\": {{\n"
+        for sentence in sentences:
+            example += f"\t\t{sentence['id']}: {sentence['label']},\n"
+        example += "\t}}\n"
+        example += "}}\n"
+        example += "\n"
+
+        example += "Explanations:\n"
+        for explanation in explanations:
+            example += f"- {explanation}\n"
+
+        example += "</example>"
+        
+        return example
+
     def get_priority(self) -> int:
         return 0
     

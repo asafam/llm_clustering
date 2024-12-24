@@ -241,6 +241,12 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
             sampled_all_dataset = False
             while not sampled_all_dataset and i < max_constraint_iterations:
                 logger.debug(f"Creating constraint: iteration {i + 1} / {max_constraint_iterations}")
+                
+                prompt_examples_file = os.path.join(os.getenv('LLM_CLUSTERING_BASE_DIR', ''), 'prompts', 'examples.yaml')
+                with open(prompt_examples_file, "r") as file:
+                    examples = yaml.safe_load(file)
+                kwargs["prompt_examples"] = examples.get(dataset_name, examples.get('default'))
+                
                 constraint_results = create_constraint(
                     dataset=dataset,
                     sample_n=sample_n,

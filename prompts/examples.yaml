@@ -1,34 +1,331 @@
+default:
+  0: 
+    sentences:
+      - id: 0 
+        text: The cat sat on the mat.
+        label: 0
+
+      - id: 1
+        text: A quick brown fox jumps over the lazy dog.
+        label: 1
+
+      - id: 2
+        text: There is a cat sitting on the mat.
+        label: 0
+
+      - id: 3
+        text: The dog lay lazily as the fox jumped over it.
+        label: 1
+
+      - id: 4
+        text: Cats are known to sit on mats.
+        label: 0
+
+      - id: 5
+        text: Canines are swift and can leap high.
+        label: 1
+
+    explanations:
+      - "0: Sentences about cats and mats"
+      - "1: Sentences about does and jumping"
+
+  1: 
+    existing_clusters:
+      0: [0, 2, 4]
+      1: [1, 3, 5]
+
+    sentences:
+      - id: 6
+        text: Dogs sometimes jump over fences.
+        label: 1
+
+      - id: 7 
+        text: The mat is where the cat likes to sit.
+        label: 0
+
+      - id: 8
+        text: Foxes are clever animals.
+        label: 2
+
+    explanations:
+      - Sentence 6 relates to Cluster 1 (about dogs and jumping).
+      - Sentence 7 is similar to sentences in Cluster 0 (about cats and mats).
+      - Sentence 8 doesn't fit into any existing cluster, so a new Cluster 2 is created.
+
 BANKING77:
-  sentences:
-    - text: When did you send me my new card?
-      label: 0
-    - text: How long will an urgent transfer from China take?
-      label: 1
-    - text: What exchange rate will I receive?
-      label: 2
-    - text: If I need to cash foreign transfers, how does that work?
-      label: 2
-    - text: What's the card you sent me's tracking number?
-      label: 0
-    - text: I am yet to receive the money in my account how long will this take?
-      label: 1
-    - text: My card isn't here yet.
-      label:
-  new_sentences:
-    - text: I'm still waiting for my card that was issued a week ago. What should I do?
-      label: 0
-  explanations:
-    - 0: Sentences about bank card arrival
-    - 1: Sentences about money transfer timing
-    - 2: Sentences about exchange rate
-  new_explanations:
-    - 
+  0:
+    sentences:
+      - id: 988
+        text: Why can't I use my American Express with Apple Pay to top up my account?
+        label: 0
+
+        id: 1924
+        text: How do I link a card that I already have?
+        label: 1
+
+        id: 407
+        text: Does Apple Pay give the option to top up?
+        label: 0
+
+        id: 393
+        text: Will I need to order a new card since mine expires next month?
+        label: 2
+
+        id: 151
+        text: Can I reactivate my lost card that I found this morning in my jacket pocket?
+        label: 1
+
+        id: 941
+        text: It appears my card expires next month, can I order a new one?
+        label: 2
+
+    explanations:
+      - 0: Sentences about Apple Pay or Google Pay (988, 407)
+      - 1: Sentences about activating a credit card (1924, 151)
+      - 2: Sentences about bank car that is about to expire (393, 941)
+
+  1:
+    existing_clusters:
+      0: [988, 407]
+      1: [1924, 151]
+      2: [393, 941]
+
+    sentences:
+      - id: 126
+        text: Can I reactivate a card I thought I lost?
+        label: 1
+
+      - id: 344
+        text: Can I use Apple Pay to top up?
+        label: 0
+      
+      - id: 2694
+        text: for some reason I am having a problem with verifying my identity.
+        label: 3
+
+    explanations:
+      - Sentence 126 relates to Cluster 1 (about activating a credit card).
+      - Sentence 344 is similar to sentences in Cluster 0 (about Apple Pay and Google Pay).
+      - Sentence 2694 doesn't fit into any existing cluster, so a new Cluster 3 is created.
 
 CLINC:
-  results:
-    - text: are my doors locked right now
-      label: 0
-    - text: are my doors locked right now
-      label: 0
-    - text: are my doors locked right now
-      label: 0
+  0:
+    sentences:
+      - id: 1024
+        text: how many calories are in hamburgers
+        label: 0
+
+      - id: 786
+        text: refresh my memory about what items i want to remember
+        label: 1
+
+      - id: 267
+        text: do you have a pet
+        label: 2
+
+      - id: 3104
+        text: what are all the things on my reminder list
+        label: 1
+
+      - id: 3326
+        text: calorie content of dr pepper
+        label: 0
+
+      - id: 2218
+        text: do you like appreciate cats or dogs more
+        label: 2
+
+    explanations:
+      - "0: Sentences about calories (1024, 3326)"
+      - "1: Sentences about reminders (786, 3104)"
+      - "2: Sentences about pets (267, 2218)"
+  
+  1:
+    existing_clusters:
+      0: [1024, 3326]
+      1: [786, 3104]
+      2: [267, 2218]
+
+    sentences:
+      - id: 3045
+        text: what did i want to remember
+        label: 1
+
+      - id: 2721
+        text: would you call yourself a cat or dog person
+        label: 2
+
+      - id: 303
+        text: could you please reset your factory settings
+        label: 3
+
+    explanations:
+      - Sentence 3045 relates to Cluster 1 (about reminders).
+      - Sentence 2721 is similar to sentences in Cluster 2 (about pets).
+      - Sentence 303 doesn't fit into any existing cluster, so a new Cluster 3 is created.
+
+MTOP_D:
+  0:
+    sentences:
+      - id: 1837
+        text: can you reschedule all my house reminders
+        label: 0
+
+      - id: 3343
+        text: Is it warm in Florida in September?
+        label: 1
+
+      - id: 3410
+        text: What are the top news for today?
+        label: 2
+
+      - id: 571
+        text: Tell me Sydney weather for 5pm today.
+        label: 1
+
+      - id: 3682
+        text: What news stories are trending in China
+        label: 2
+
+      - id: 1653
+        text: delete leave office reminder
+        label: 0
+
+    explanations:
+      - "0: Sentences about reminders (1837, 1653)"
+      - "1: Sentences about weather (3343, 571)"
+      - "2: Sentences about news (3410, 3682)"
+  1:
+    existing_clusters:
+      0: [1837, 1653]
+      1: [3343, 571]
+      2: [3410, 3682]
+
+    sentences:
+      - id: 226
+        text: Leave call and switch now
+        label: 3
+
+      - id: 1050
+        text: Add reminder to send flowers to grandmother next week for birthday
+        label: 0
+
+      - id: 501
+        text: what is the latest news on the  riots in Missouri?
+        label: 2
+
+    explanations:
+      - Sentence 226 doesn't fit into any existing cluster, so a new Cluster 3 is created.
+      - Sentence 1050 relates to Cluster 0 (about reminders).
+      - Sentence 501 is similar to sentences in Cluster 2 (about news).
+
+MTOP_I:
+  0:
+    sentences:
+      - id: 2653
+        text: Add Chris to the reminders for pool league this month.
+        label: 0
+
+      - id: 250
+        text: Delete most recent timer
+        label: 1
+
+      - id: 949
+        text: show how many time nancy called me on sunday
+        label: 2
+
+      - id: 360
+        text: list missed calls today
+        label: 2
+
+      - id: 199
+        text: Delete the current timer
+        label: 1
+
+      - id: 1837
+        text: can you reschedule all my house reminders
+        label: 0
+
+    explanations:
+      - "0: Sentences about reminders (2653, 1837)"
+      - "1: Sentences about timer delete actions (250, 199)"
+      - "2: Sentences about calls history (3410, 3682)"
+      
+  1:
+    existing_clusters:
+      0: [2653, 1837]
+      1: [250, 199]
+      2: [3410, 3682]
+
+    sentences:
+      - id: 3168
+        text: Can I update my reminder for next month’s trip to Canada?
+        label: 0
+
+      - id: 624
+        text: send it to Sherell Grotzinger
+        label: 3
+
+      - id: 3668
+        text: Did I get any calls from my wife
+        label: 2
+
+    explanations:
+      - Sentence 3168 relates to Cluster 0 (about reminders).
+      - Sentence 624 doesn't fit into any existing cluster, so a new Cluster 3 is created.
+      - Sentence 3668 is similar to sentences in Cluster 2 (about calls history).
+
+MASSIVE:
+  0:
+    sentences:
+      - id: 1384
+        text: please add this email to my contacts
+        label: 0
+
+      - id: 2883
+        text: shall i change my car tires to snow tires soon
+        label: 1
+
+      - id: 169
+        text: what is the commute time to the theater
+        label: 2
+
+      - id: 1375
+        text: please add an email for john doe to my contacts johndoe at yahoo dot com
+        label: 0
+
+      - id: 202
+        text: please check the weather in kansas
+        label: 1
+
+      - id: 646
+        text: what time does the train to place leave
+        label: 2
+
+    explanations:
+      - "0: Sentences about email contacts (1384, 1375)"
+      - "1: Sentences about weather (2883, 202)"
+      - "2: Sentences about navigation (169, 646)"
+  1:
+    existing_clusters:
+      0: [1384, 1375]
+      1: [2883, 202]
+      2: [169, 646]
+
+    sentences:
+      - id: 2745
+        text: just add a new email in my contacts from michael
+        label: 0
+
+      - id: 2156
+        text: what is the weather in beijing
+        label: 1
+
+      - id: 1084
+        text: please turn on my balcony lights
+        label: 3
+
+    explanations:
+      - Sentence 2745 relates to Cluster 0 (about email contacts).
+      - Sentence 2156 is similar to sentences in Cluster 1 (about weather).
+      - Sentence 1084 doesn't fit into any existing cluster, so a new Cluster 3 is created.

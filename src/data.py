@@ -65,9 +65,9 @@ def load_dataset_by_name(dataset_name: DatasetName, split: str = 'test', **kwarg
         dataset = load_dataset('fancyzhx/ag_news')
     elif dataset_name == DatasetName.MASSIVE:
         dataset = load_dataset('mteb/amazon_massive_intent', "en", trust_remote_code=True)
-    elif dataset_name == DatasetName.MTOP_D:
+    elif dataset_name == DatasetName.MTOP_DOMAIN:
         dataset = load_dataset('mteb/mtop_domain', "en", trust_remote_code=True)
-    elif dataset_name == DatasetName.MTOP_I:
+    elif dataset_name == DatasetName.MTOP_INTENT:
         dataset = load_dataset('mteb/mtop_intent', "en", trust_remote_code=True)
     elif dataset_name == DatasetName.TOPV2:
         dataset = load_dataset('WillHeld/top_v2')
@@ -139,7 +139,7 @@ def get_label_column(dataset_name: DatasetName):
     return label_column
 
 def get_label_name_column(dataset_name: DatasetName):
-    if dataset_name in [DatasetName.BANKING77, DatasetName.MTOP_D, DatasetName.MTOP_I]:
+    if dataset_name in [DatasetName.BANKING77, DatasetName.MTOP_DOMAIN, DatasetName.MTOP_INTENT]:
         label_name_column = 'label_text'
     elif dataset_name == DatasetName.TOPV2:
         label_name_column = 'domain'

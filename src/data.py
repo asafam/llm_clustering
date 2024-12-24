@@ -28,19 +28,12 @@ class TextLabelDataset(Dataset):
         ids = ids if ids is not None else list(range(len(texts)))
 
         if shuffle:
-            joined = list(zip(ids, texts, labels, label_names))
+            shuffled_ids = ids.copy()
             random.seed(42)
-            random.shuffle(joined)
-            # Unpack the shuffled pairs back into labels and texts
-            ids, texts, labels, label_names = zip(*joined)
-            # Convert back to lists
-            ids = list(ids)
-            texts = list(texts)
-            labels = list(labels)
-            label_names = list(label_names)
+            random.shuffle(shuffled_ids)
             
-        self.ids = list(range(len(ids)))
-        self.orig_ids = ids
+        self.ids = ids
+        self.shuffled_ids = shuffled_ids
         self.texts = texts
         self.labels = labels
         self.label_names = label_names
@@ -49,7 +42,7 @@ class TextLabelDataset(Dataset):
         return len(self.texts)
 
     def __getitem__(self, idx):
-        return self.ids[idx], self.texts[idx], self.labels[idx], self.label_names[idx], self.orig_ids[idx]
+        return self.ids[idx], self.texts[idx], self.labels[idx], self.label_names[idx], self.shuffled_ids[idx]
     
     def __str__(self) -> str:
         return f"{self.__class__.__name__}{len(self.texts)}"

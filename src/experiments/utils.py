@@ -138,7 +138,7 @@ def encode_dataset(
         embeddings = np.load(file_path)
 
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
-    for batch_ids, batch_texts, batch_labels, _ in dataloader:
+    for batch_ids, batch_texts, batch_labels, _, _ in dataloader:
         all_labels.extend(batch_labels)
         all_ids.extend(batch_ids)
         if embeddings is not None:

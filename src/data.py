@@ -107,14 +107,15 @@ def get_dataset_from_df(
         id_column: str = 'id', 
         text_column: str = 'text', 
         label_column: str = 'label', 
-        label_name_column: str = 'name'
+        label_name_column: str = 'name',
+        **kwargs
     ) -> TextLabelDataset:
     ids = df[id_column].tolist() if 'id' in df else None
     texts = df[text_column].tolist()
     labels = df[label_column].tolist()
     label_names = df[label_name_column].tolist()
 
-    text_label_dataset = TextLabelDataset(texts, labels, ids, label_names)
+    text_label_dataset = TextLabelDataset(texts, labels, ids, label_names, **kwargs)
     return text_label_dataset
 
 

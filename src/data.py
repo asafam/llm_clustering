@@ -49,7 +49,7 @@ class TextLabelDataset(Dataset):
         return len(self.texts)
 
     def __getitem__(self, idx):
-        return self.ids[idx], self.texts[idx], self.labels[idx], self.label_names[idx]
+        return self.ids[idx], self.texts[idx], self.labels[idx], self.label_names[idx], self.orig_ids[idx]
     
     def __str__(self) -> str:
         return f"{self.__class__.__name__}{len(self.texts)}"

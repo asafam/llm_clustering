@@ -155,8 +155,8 @@ def create_constraint(
         ]
 
         # Format the raw data using the appropriate formatter function
-        format_func = get_formatter(prompt_type=prompt_type, step=step, shuffled_id_to_id=shuffled_id_to_id)
-        data = format_func(data_raw, context=context) if format_func else data_raw
+        format_func = get_formatter(prompt_type=prompt_type, step=step)
+        data = format_func(data_raw, context=context, shuffled_id_to_id=shuffled_id_to_id) if format_func else data_raw
 
         # Generate constraints based on the accumulated data and sampled subset
         constraint = generate_constraint(

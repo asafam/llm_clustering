@@ -266,7 +266,7 @@ class HardLabelsGMMClustering(KHyperparamClusteringModel):
         # Step 2: Standardize the data (applies to both labeled and unlabeled points)
         scaler = StandardScaler()
         X_normalized = scaler.fit_transform(X)  # Fit on all data
-        X_constraints = X[constraint.get_ids()]
+        X_constraints = X_normalized[constraint.get_ids()]
 
         # Step 3: Compute GMM initialization parameters from the labeled subset
         unique_labels = np.unique(y_labeled)  # Correctly extract unique labels as an iterable

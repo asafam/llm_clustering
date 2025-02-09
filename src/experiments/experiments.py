@@ -245,7 +245,7 @@ class LLMConstraintedClusteringExperiment(BaseExperiment):
                 prompt_examples_file = os.path.join(os.getenv('LLM_CLUSTERING_BASE_DIR', ''), 'prompts', 'examples.yaml')
                 with open(prompt_examples_file, "r") as file:
                     examples = yaml.safe_load(file)
-                kwargs["prompt_examples"] = examples.get(dataset_name, examples.get('default'))
+                kwargs["prompt_examples"] = examples.get(dataset_name.value, examples.get('default'))
                 
                 constraint_results = create_constraint(
                     dataset=dataset,

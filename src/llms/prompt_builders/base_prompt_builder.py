@@ -43,18 +43,18 @@ class BasePromptBuilder:
         # Format clusters
         clusters = kwargs.get("clusters")
         if clusters:
-            formatted_text = "{{"
+            formatted_text = "{"
             formatted_text += ',\n'.join([('\t' + str(label) + ': [' + ', '.join([str(id_to_shuffled_id[x['id']]) for x in clusters[label]]) + ']') for label in clusters.keys()])
-            formatted_text += "}}"
+            formatted_text += "}"
             prompt_params["clusters_by_ids"] = formatted_text
 
-            formatted_text = "{{"
+            formatted_text = "{"
             formatted_text += ',\n'.join([('\t' + str(label) + ': [' + '\n\t'.join([f"[ID: {id_to_shuffled_id[x['id']]}] {x['text']}" for x in clusters[label]]) + '\n]') for label in clusters.keys()])
-            formatted_text += "}}"
+            formatted_text += "}"
             prompt_params["clusters_by_texts"] = formatted_text
         else:
-            prompt_params["clusters_by_ids"] = "{{ }}"
-            prompt_params["clusters_by_texts"] = "{{ }}"
+            prompt_params["clusters_by_ids"] = "{ }"
+            prompt_params["clusters_by_texts"] = "{ }"
 
         # Format explanations
         explanations = kwargs.get("explanations")
@@ -81,10 +81,10 @@ class BasePromptBuilder:
         
         if existing_clusters:
             example += "Existing clustering:\n"
-            example += "{{\n"
+            example += "{\n"
             for label, ids in existing_clusters.items():
                 example += f"\t{str(label)}: [{', '.join([str(x) for x in ids])}]\n"
-            example += "}}\n"
+            example += "}\n"
             example += "\n"
 
         example += "Sentences:\n"
@@ -92,12 +92,12 @@ class BasePromptBuilder:
             example += f"[ID: {sentence['id']}] {sentence['text']}\n"
         example += "\n"
         example += "Outputs:\n"
-        example += "{{\n"
-        example += "\t\"results\": {{\n"
+        example += "{\n"
+        example += "\t\"results\": {\n"
         for sentence in sentences:
             example += f"\t\t{sentence['id']}: {sentence['label']},\n"
-        example += "\t}}\n"
-        example += "}}\n"
+        example += "\t}\n"
+        example += "}\n"
         example += "\n"
 
         example += "Explanations:\n"

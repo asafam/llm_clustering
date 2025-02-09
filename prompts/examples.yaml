@@ -59,30 +59,30 @@ BANKING77:
         text: Why can't I use my American Express with Apple Pay to top up my account?
         label: 0
 
-        id: 1924
+      - id: 1924
         text: How do I link a card that I already have?
         label: 1
 
-        id: 407
+      - id: 407
         text: Does Apple Pay give the option to top up?
         label: 0
 
-        id: 393
+      - id: 393
         text: Will I need to order a new card since mine expires next month?
         label: 2
 
-        id: 151
+      - id: 151
         text: Can I reactivate my lost card that I found this morning in my jacket pocket?
         label: 1
 
-        id: 941
+      - id: 941
         text: It appears my card expires next month, can I order a new one?
         label: 2
 
     explanations:
-      - 0: Sentences about Apple Pay or Google Pay (988, 407)
-      - 1: Sentences about activating a credit card (1924, 151)
-      - 2: Sentences about bank car that is about to expire (393, 941)
+      - "0: Sentences about Apple Pay or Google Pay (988, 407)"
+      - "1: Sentences about activating a credit card (1924, 151)"
+      - "2: Sentences about bank car that is about to expire (393, 941)"
 
   1:
     existing_clusters:

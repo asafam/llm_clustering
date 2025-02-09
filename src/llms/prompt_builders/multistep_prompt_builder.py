@@ -6,7 +6,7 @@ import logging
 class MultistepPromptBuilder(BasePromptBuilder):
     def build_prompt(self, system_prompt: str, user_prompt: str, step: int = 0, context: any = None, **kwargs):
         if step == 0:
-            system_prompt, user_prompt = super().build_prompt(system_prompt=system_prompt, user_prompt=user_prompt, **kwargs)
+            system_prompt, user_prompt = super().build_prompt(system_prompt=system_prompt, user_prompt=user_prompt, step=step, **kwargs)
         elif context is not None:
             # prepare the 'cluters' arg
             sentences_labels = context.get("sentences_labels")
@@ -16,7 +16,7 @@ class MultistepPromptBuilder(BasePromptBuilder):
             for sentence_id, label in sentences_labels.items():
                 clusters[label].append({'id': sentence_id, 'text': ids_texts[sentence_id]})
                 
-            system_prompt, user_prompt = super().build_prompt(system_prompt=system_prompt, user_prompt=user_prompt, clusters=clusters, explanations=explanations, **kwargs)
+            system_prompt, user_prompt = super().build_prompt(system_prompt=system_prompt, user_prompt=user_prompt, clusters=clusters, explanations=explanations, step=step, **kwargs)
         else:
             raise ValueError(f"Context should have a value for the sentences_labels key, current value is {context}")
 
